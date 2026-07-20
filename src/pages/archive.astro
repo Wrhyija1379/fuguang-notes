@@ -1,0 +1,41 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { categories } from "@/data/site";
+import { formatDate, getReadingMinutes, postHref, sortPosts } from "@/lib/posts";
+
+const posts = sortPosts(await getCollection("posts", ({ data }) => !data.draft));
+const years = [...new Set(posts.map((post) => post.data.publishedAt.getFullYear()))];
+---
+
+<BaseLayout title="文章归档" description="浮光笔记的全部文章，按发布时间排列。">
+  <header class="page-intro shell">
+    <span>ALL STORIES</span>
+    <h1>文章归档</h1>
+    <p>这里没有热门排序。{posts.length} 篇记录，按它们发生的时间依次放好。</p>
+  </header>
+
+  <section class="archive shell">
+    {
+      years.map((year) => (
+        <div class="archive-year">
+          <div class="archive-year-label"><strong>{year}</strong><span>{posts.filter((post) => post.data.publishedAt.getFullYear() === year).length} 篇</span></div>
+          <div class="archive-list">
+            {posts.filter((post) => post.data.publishedAt.getFullYear() === year).map((post) => {
+              const category = categories[post.data.category];
+              return (
+                <a href={postHref(post)} style={`--archive-accent:${category.accent}`}>
+                  <time>{formatDate(post.data.publishedAt, false)}</time>
+                  <span>{category.label}</span>
+                  <strong>{post.data.title}</strong>
+                  <small>{getReadingMinutes(post)} min</small>
+                  <b aria-hidden="true">↗</b>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      ))
+    }
+  </section>
+</BaseLayout>

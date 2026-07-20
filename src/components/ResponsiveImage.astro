@@ -1,0 +1,50 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+  class?: string;
+  sizes?: string;
+  loading?: "eager" | "lazy";
+  fetchpriority?: "high" | "low" | "auto";
+}
+
+const {
+  src,
+  alt,
+  class: className,
+  sizes = "100vw",
+  loading = "lazy",
+  fetchpriority = "auto",
+} = Astro.props;
+
+const dimensions: Record<string, [number, number]> = {
+  hero: [2200, 1320],
+  tech: [1600, 1200],
+  life: [1600, 1350],
+  reading: [1200, 1500],
+  gaming: [1600, 1350],
+  about: [2000, 1200],
+  "rainy-desk": [1800, 1200],
+  dinner: [1800, 1200],
+  "outer-wilds": [1800, 1200],
+};
+const match = src.match(/\/([^/]+)\.webp$/);
+const stem = match?.[1];
+const [width, height] = dimensions[stem ?? ""] ?? [1600, 1000];
+const srcset = stem
+  ? [480, 960, 1600].map((candidate) => `/images/${stem}-${candidate}.webp ${candidate}w`).join(", ")
+  : undefined;
+---
+
+<img
+  class={className}
+  src={src}
+  srcset={srcset}
+  sizes={sizes}
+  width={width}
+  height={height}
+  alt={alt}
+  loading={loading}
+  decoding="async"
+  fetchpriority={fetchpriority}
+/>

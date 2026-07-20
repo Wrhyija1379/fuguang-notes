@@ -1,0 +1,28 @@
+---
+import type { Post } from "@/lib/posts";
+import { categories } from "@/data/site";
+import { formatDate, getReadingMinutes, postHref } from "@/lib/posts";
+
+interface Props {
+  post: Post;
+  showSummary?: boolean;
+  index?: number;
+}
+
+const { post, showSummary = true, index } = Astro.props;
+const category = categories[post.data.category];
+---
+
+<a class="post-row" href={postHref(post)} style={`--row-accent:${category.accent}`}>
+  {typeof index === "number" && <span class="post-index">{String(index + 1).padStart(2, "0")}</span>}
+  <div class="post-row-main">
+    <div class="post-row-meta">
+      <span>{category.label}</span>
+      <time datetime={post.data.publishedAt.toISOString()}>{formatDate(post.data.publishedAt)}</time>
+    </div>
+    <h3>{post.data.title}</h3>
+    {showSummary && <p>{post.data.summary}</p>}
+  </div>
+  <span class="post-row-time">{getReadingMinutes(post)} min</span>
+  <span class="post-row-arrow" aria-hidden="true">↗</span>
+</a>

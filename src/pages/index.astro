@@ -1,0 +1,264 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SectionHeading from "@/components/SectionHeading.astro";
+import PostRow from "@/components/PostRow.astro";
+import ResponsiveImage from "@/components/ResponsiveImage.astro";
+import { categories, categoryOrder, moments, type CategoryKey } from "@/data/site";
+import { formatDate, getReadingMinutes, postHref, sortPosts } from "@/lib/posts";
+
+const posts = sortPosts(
+  (await getCollection("posts")).filter((post) => !post.data.draft),
+);
+const featured = posts.find((post) => post.data.featured) ?? posts[0];
+const grouped = Object.fromEntries(
+  categoryOrder.map((key) => [key, posts.filter((post) => post.data.category === key)]),
+) as Record<CategoryKey, typeof posts>;
+const techPosts = grouped.tech;
+const lifePosts = grouped.life;
+const readingPost = grouped.reading[0];
+const gamingPost = grouped.gaming[0];
+const techLead = techPosts[1] ?? techPosts[0];
+const lifeLead = lifePosts[0];
+const highlightedIds = new Set(
+  [featured?.id, techLead?.id, lifeLead?.id, readingPost?.id, gamingPost?.id].filter(
+    (id): id is string => Boolean(id),
+  ),
+);
+const unhighlightedPosts = posts.filter((post) => !highlightedIds.has(post.id));
+const latestPosts = (unhighlightedPosts.length > 0 ? unhighlightedPosts : posts).slice(0, 7);
+---
+
+<BaseLayout>
+  {featured ? (
+    <section class="home-hero" aria-labelledby="featured-title">
+      <ResponsiveImage class="home-hero-image" src={featured.data.cover} alt={featured.data.coverAlt} sizes="100vw" loading="eager" fetchpriority="high" />
+      <div class="home-hero-shade"></div>
+      <div class="hero-grid-lines" aria-hidden="true"></div>
+      <div class="shell home-hero-inner">
+        <div class="hero-edition">
+          <span>ISSUE {featured.data.issue ?? String(featured.data.seriesNo ?? 1).padStart(2, "0")}</span>
+          <span>{featured.data.season ?? formatDate(featured.data.publishedAt)}</span>
+        </div>
+        <div class="hero-copy">
+          <div class="hero-meta">
+            <span>{categories[featured.data.category].label} · 主推</span>
+            <time datetime={featured.data.publishedAt.toISOString()}>{formatDate(featured.data.publishedAt)}</time>
+            <span>{getReadingMinutes(featured)} 分钟阅读</span>
+          </div>
+          <h1 id="featured-title">{featured.data.title}</h1>
+          <p>{featured.data.summary}</p>
+          <a class="hero-link" href={postHref(featured)}>进入这篇记录 <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="hero-note" aria-hidden="true">
+          <span>{String(featured.data.seriesNo ?? 1).padStart(2, "0")}</span>
+          <p>{(featured.data.kicker ?? "Measure first / Change second").split(" / ").map((line, index, lines) => <>{line}{index < lines.length - 1 && <br />}</>)}</p>
+        </div>
+      </div>
+    </section>
+  ) : (
+    <section class="home-empty shell" aria-labelledby="empty-title">
+      <span>NEW NOTEBOOK</span>
+      <h1 id="empty-title">第一篇记录，正在路上。</h1>
+      <p>新的故事正在整理，稍后再来看看。</p>
+    </section>
+  )}
+
+  <section class="category-overview shell section-space" aria-labelledby="category-title">
+    <SectionHeading
+      id="category-title"
+      eyebrow="CONTENT MAP"
+      title="四条持续记录的线"
+      note="技术占据一半篇幅，其他部分保留各自的节奏和观看方式。"
+    />
+    <div class="category-strip">
+      {
+        categoryOrder.map((key) => {
+          const category = categories[key];
+          return (
+            <a class={`category-tile category-${key}`} href={`/category/${key}/`}>
+              <ResponsiveImage src={category.cover} alt="" sizes="(max-width: 680px) 100vw, 28vw" />
+              <span class="category-tile-shade" />
+              <div class="category-share">{category.share}</div>
+              <div class="category-tile-copy">
+                <small>{category.english}</small>
+                <strong>{category.label}</strong>
+                <span>{category.moduleTitle} ↗</span>
+              </div>
+            </a>
+          );
+        })
+      }
+    </div>
+  </section>
+
+  {techLead && (
+    <section class="tech-band section-space" aria-labelledby="tech-title">
+      <div class="shell">
+        <SectionHeading
+          id="tech-title"
+          eyebrow="TECH · 50%"
+          title="编译现场"
+          note="把每一次踩坑、验证和取舍，整理成下一次可以复用的经验。"
+          href="/category/tech/"
+          inverse={true}
+        />
+        <div class="tech-layout">
+          <a class="tech-lead" href={postHref(techLead)}>
+            <ResponsiveImage src={techLead.data.cover} alt={techLead.data.coverAlt} sizes="(max-width: 920px) 100vw, 55vw" />
+            <div class="tech-lead-overlay"></div>
+            <div class="tech-lead-copy">
+              <span>{techLead.data.kicker ?? "本周方法"}</span>
+              <h3>{techLead.data.title}</h3>
+              <p>{techLead.data.summary}</p>
+            </div>
+          </a>
+          <div class="tech-list">
+            {techPosts.slice(2).map((post, index) => <PostRow post={post} showSummary={false} index={index} />)}
+            <div class="now-building">
+              <div>
+                <span class="status-light"></span>
+                <small>NOW BUILDING</small>
+              </div>
+              <strong>本地优先的稍后读工具</strong>
+              <p>Astro · IndexedDB · Service Worker</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {lifeLead && (
+    <section class="life-band section-space" aria-labelledby="life-title">
+      <div class="shell">
+        <SectionHeading
+          id="life-title"
+          eyebrow="LIFE · 30%"
+          title="城市切片"
+          note="不追求攻略感，只留下光线、路线和普通日子里值得记住的部分。"
+          href="/category/life/"
+        />
+        <div class="life-layout">
+          <a class="life-image-story" href={postHref(lifeLead)}>
+            <ResponsiveImage src={lifeLead.data.cover} alt={lifeLead.data.coverAlt} sizes="(max-width: 920px) 100vw, 58vw" />
+            <span class="life-marker">{lifeLead.data.location ?? "FIELD NOTES"}</span>
+            <div>
+              <small>{lifeLead.data.kicker ?? "FIELD NOTE"} {String(lifeLead.data.seriesNo ?? 1).padStart(2, "0")}</small>
+              <h3>{lifeLead.data.title}</h3>
+            </div>
+          </a>
+          <div class="life-notes">
+            {lifePosts.slice(1).map((post, index) => (
+              <a href={postHref(post)}>
+                <span>{String(index + 2).padStart(2, "0")}</span>
+                <div>
+                  <time datetime={post.data.publishedAt.toISOString()}>{formatDate(post.data.publishedAt, false)}</time>
+                  <h3>{post.data.title}</h3>
+                  <p>{post.data.summary}</p>
+                </div>
+                <b aria-hidden="true">↗</b>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {(readingPost || gamingPost) && (
+    <section class="culture-band section-space">
+      <div class:list={["shell", "culture-grid", { single: !readingPost || !gamingPost }]}>
+        {readingPost && (
+          <article class="reading-feature" aria-labelledby="reading-title">
+            <header>
+              <span>READING · 10%</span>
+              <a href="/category/reading/">全部书评 ↗</a>
+            </header>
+            <div class="reading-body">
+              <ResponsiveImage src={readingPost.data.cover} alt={readingPost.data.coverAlt} sizes="(max-width: 680px) 46vw, 22vw" />
+              <div>
+                <small>页边留白 / NO. {String(readingPost.data.seriesNo ?? 1).padStart(2, "0")}</small>
+                <h2 id="reading-title">{readingPost.data.title}</h2>
+                <blockquote>“{readingPost.data.quote ?? readingPost.data.summary}”</blockquote>
+                <p>{readingPost.data.summary}</p>
+                <a class="text-link" href={postHref(readingPost)}>翻开这篇笔记 <span aria-hidden="true">↗</span></a>
+              </div>
+            </div>
+          </article>
+        )}
+
+        {gamingPost && (
+          <article class="gaming-feature" aria-labelledby="gaming-title">
+            <ResponsiveImage src={gamingPost.data.cover} alt={gamingPost.data.coverAlt} sizes="(max-width: 920px) 100vw, 50vw" />
+            <div class="game-scanline" aria-hidden="true"></div>
+            <header>
+              <span>GAMING · 10%</span>
+              <a href="/category/gaming/">全部存档 ↗</a>
+            </header>
+            <div class="gaming-copy">
+              <small>{gamingPost.data.kicker ?? "SAVE SLOT"} {String(gamingPost.data.seriesNo ?? 1).padStart(2, "0")} · {gamingPost.data.gameStatus ?? "记录中"}</small>
+              <h2 id="gaming-title">{gamingPost.data.title}</h2>
+              <p>{gamingPost.data.summary}</p>
+              <div class="game-status">
+                <span><b>{gamingPost.data.playtime ?? "—"}</b> 游玩时间</span>
+                <span><b>{gamingPost.data.rating ?? "—"}</b> 私人评分</span>
+              </div>
+              <a class="game-link" href={postHref(gamingPost)}>读取记录 <span aria-hidden="true">→</span></a>
+            </div>
+          </article>
+        )}
+      </div>
+    </section>
+  )}
+
+  <section class="latest-band section-space" aria-labelledby="latest-title">
+    <div class="shell latest-grid">
+      <div>
+        <SectionHeading
+          id="latest-title"
+          eyebrow="LATEST STORIES"
+          title="最近更新"
+          note="按时间排列，优先展示尚未在首页其他模块出现的记录。"
+          href="/archive/"
+          linkLabel="打开归档"
+        />
+        <div class="latest-list">
+          {latestPosts.length > 0 ? (
+            latestPosts.map((post, index) => <PostRow post={post} index={index} />)
+          ) : (
+            <p class="content-empty" role="status">还没有可以展示的公开文章。</p>
+          )}
+        </div>
+      </div>
+
+      <aside class="timeline" aria-labelledby="timeline-title">
+        <div class="timeline-head">
+          <span>NOW / RECENTLY</span>
+          <h2 id="timeline-title">浮光时间线</h2>
+          <p>文章之外，正在发生的小事。</p>
+        </div>
+        <ol>
+          {moments.map((moment) => (
+            <li>
+              <time>{moment.date}</time>
+              <div>
+                <span>{moment.type}</span>
+                <h3>{moment.title}</h3>
+                <p>{moment.note}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </aside>
+    </div>
+  </section>
+
+  <section class="home-signoff">
+    <div class="shell">
+      <span>KEEP NOTES, KEEP CURIOUS.</span>
+      <p>愿我们在快速抵达之前，仍然保留观察世界的耐心。</p>
+      <a href="/about/">认识写作者 <span aria-hidden="true">↗</span></a>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,313 @@
+---
+import { getCollection } from "astro:content";
+import { categories, categoryOrder, site } from "@/data/site";
+
+// 仅用于首屏计数;搜索数据改由 /search-index.json 懒加载(避免每页内联全文)。
+const postCount = (await getCollection("posts", ({ data }) => !data.draft)).length;
+const path = Astro.url.pathname;
+const isCurrent = (href: string) => href === "/" ? path === "/" : path.startsWith(href);
+---
+
+<header class="site-header" data-header>
+  <div class="header-inner shell">
+    <a class="brand" href="/" aria-label={`${site.name}首页`}>
+      <span class="brand-mark" aria-hidden="true">浮</span>
+      <span class="brand-copy">
+        <strong>{site.name}</strong>
+        <small>FUGUANG NOTES</small>
+      </span>
+    </a>
+
+    <nav class="desktop-nav" aria-label="主导航">
+      <a class:list={[{ active: isCurrent("/") }]} href="/" aria-current={isCurrent("/") ? "page" : undefined}>首页</a>
+      {
+        categoryOrder.map((key) => (
+          <a
+            class:list={[{ active: isCurrent(`/category/${key}/`) }]}
+            href={`/category/${key}/`}
+            aria-current={isCurrent(`/category/${key}/`) ? "page" : undefined}
+          >
+            {categories[key].label}
+          </a>
+        ))
+      }
+      <a class:list={[{ active: isCurrent("/archive/") }]} href="/archive/" aria-current={isCurrent("/archive/") ? "page" : undefined}>归档</a>
+      <a class:list={[{ active: isCurrent("/about/") }]} href="/about/" aria-current={isCurrent("/about/") ? "page" : undefined}>关于</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="search-trigger" type="button" data-search-open aria-label="搜索文章">
+        <span class="search-symbol" aria-hidden="true"></span>
+        <span class="search-word">搜索</span>
+      </button>
+      <button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="切换主题">
+        <span class="theme-icon theme-icon-system" aria-hidden="true">◐</span>
+        <span class="theme-icon theme-icon-light" aria-hidden="true">☼</span>
+        <span class="theme-icon theme-icon-dark" aria-hidden="true">☾</span>
+      </button>
+      <span class="sr-only" role="status" aria-live="polite" data-theme-status></span>
+      <button class="icon-button menu-toggle" type="button" data-menu-toggle aria-label="打开导航" aria-controls="mobile-navigation" aria-expanded="false">
+        <span aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+
+  <nav id="mobile-navigation" class="mobile-nav shell" data-mobile-nav aria-label="移动端导航" hidden>
+    <a href="/" aria-current={isCurrent("/") ? "page" : undefined}>首页</a>
+    {categoryOrder.map((key) => <a href={`/category/${key}/`} aria-current={isCurrent(`/category/${key}/`) ? "page" : undefined}>{categories[key].label}</a>)}
+    <a href="/archive/" aria-current={isCurrent("/archive/") ? "page" : undefined}>归档</a>
+    <a href="/about/" aria-current={isCurrent("/about/") ? "page" : undefined}>关于</a>
+  </nav>
+</header>
+
+<dialog class="search-dialog" data-search-dialog aria-labelledby="search-dialog-title" aria-describedby="search-count">
+  <div class="search-panel">
+    <div class="search-head">
+      <label id="search-dialog-title" for="site-search">搜索浮光笔记</label>
+      <button class="icon-button" type="button" data-search-close aria-label="关闭搜索" title="关闭">×</button>
+    </div>
+    <div class="search-field-wrap">
+      <span class="search-symbol" aria-hidden="true"></span>
+      <input id="site-search" data-search-input type="search" placeholder="输入标题、标签或关键词" autocomplete="off" aria-controls="search-results" aria-describedby="search-count" />
+    </div>
+    <p id="search-count" class="search-count" data-search-count role="status" aria-live="polite" aria-atomic="true" data-total={postCount}>全部 {postCount} 篇文章</p>
+    <div id="search-results" class="search-results" data-search-results aria-label="文章搜索结果">
+      <div data-search-list></div>
+      <p class="search-empty" data-search-empty hidden>没有找到匹配的文章。</p>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const THEME_KEY = "fuguang-theme";
+  type ThemeMode = "system" | "light" | "dark";
+  let cleanupHeader: (() => void) | undefined;
+
+  // ---- 搜索:模块级索引(跨页面/含 View Transitions 只加载并建索引一次)----
+  type SearchDoc = { h: string; t: string; c: string; l: string; m: number; s: string; g: string[]; b: string };
+  type SearchIndex = { docs: SearchDoc[]; inverted: Map<string, Map<number, number>> };
+  let searchIndexPromise: Promise<SearchIndex> | null = null;
+
+  const CJK_RUN = /[㐀-䶿一-鿿豈-﫿]+/g;
+  const LATIN_RUN = /[a-z0-9]+/g;
+
+  // 中文按 bigram(相邻二字)切分,英文/数字按词;单字 CJK 也保留一个 token。
+  function tokenize(text: string): string[] {
+    const tokens: string[] = [];
+    const latin = text.toLowerCase().match(LATIN_RUN);
+    if (latin) for (const word of latin) tokens.push(word);
+    const runs = text.match(CJK_RUN);
+    if (runs) {
+      for (const run of runs) {
+        if (run.length === 1) tokens.push(run);
+        else for (let i = 0; i < run.length - 1; i += 1) tokens.push(run.slice(i, i + 2));
+      }
+    }
+    return tokens;
+  }
+
+  // 建索引侧:CJK 同时产出 unigram(单字)+ bigram,使单字与多字查询都能命中。
+  // 查询侧仍用 tokenize(多字走 bigram 保精度,单字走 unigram)。
+  function tokenizeForIndex(text: string): string[] {
+    const tokens: string[] = [];
+    const latin = text.toLowerCase().match(LATIN_RUN);
+    if (latin) for (const word of latin) tokens.push(word);
+    const runs = text.match(CJK_RUN);
+    if (runs) {
+      for (const run of runs) {
+        for (let i = 0; i < run.length; i += 1) tokens.push(run[i]); // unigram
+        for (let i = 0; i < run.length - 1; i += 1) tokens.push(run.slice(i, i + 2)); // bigram
+      }
+    }
+    return tokens;
+  }
+
+  // 字段加权:标题 > 标签 > 摘要 > 正文。倒排表 token -> (docId -> 累计权重)。
+  const FIELD_WEIGHT = { t: 6, g: 4, s: 2, b: 1 } as const;
+
+  function buildIndex(docs: SearchDoc[]): SearchIndex {
+    const inverted = new Map<string, Map<number, number>>();
+    const add = (token: string, id: number, weight: number) => {
+      let postings = inverted.get(token);
+      if (!postings) inverted.set(token, (postings = new Map()));
+      postings.set(id, (postings.get(id) ?? 0) + weight);
+    };
+    docs.forEach((doc, id) => {
+      const fields: Array<[string, keyof typeof FIELD_WEIGHT]> = [
+        [doc.t, "t"], [doc.g.join(" "), "g"], [doc.s, "s"], [doc.b, "b"],
+      ];
+      for (const [text, field] of fields) {
+        const weight = FIELD_WEIGHT[field];
+        for (const token of tokenizeForIndex(text)) add(token, id, weight);
+      }
+    });
+    return { docs, inverted };
+  }
+
+  async function loadSearchIndex(): Promise<SearchIndex> {
+    if (!searchIndexPromise) {
+      searchIndexPromise = fetch("/search-index.json")
+        .then((res) => { if (!res.ok) throw new Error(String(res.status)); return res.json(); })
+        .then((docs: SearchDoc[]) => buildIndex(docs))
+        .catch((error) => { searchIndexPromise = null; throw error; });
+    }
+    return searchIndexPromise;
+  }
+
+  // 查询:并集 token 命中 + 权重累加,再按分数降序。复杂度 O(k·p + R·logR)。
+  function queryIndex(index: SearchIndex, query: string): SearchDoc[] {
+    const tokens = [...new Set(tokenize(query))];
+    if (tokens.length === 0) return index.docs;
+    const scores = new Map<number, number>();
+    for (const token of tokens) {
+      const postings = index.inverted.get(token);
+      if (!postings) continue;
+      for (const [id, weight] of postings) scores.set(id, (scores.get(id) ?? 0) + weight);
+    }
+    return [...scores.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+      .map(([id]) => index.docs[id]);
+  }
+
+  function setupHeader() {
+    cleanupHeader?.();
+    const desktopQuery = matchMedia("(min-width: 921px)");
+    const systemThemeQuery = matchMedia("(prefers-color-scheme: dark)");
+    const cleanups: Array<() => void> = [];
+
+    const themeButton = document.querySelector<HTMLButtonElement>("[data-theme-toggle]");
+    const themeStatus = document.querySelector<HTMLElement>("[data-theme-status]");
+    if (themeButton) {
+      const readMode = (): ThemeMode => {
+        const saved = localStorage.getItem(THEME_KEY);
+        return saved === "light" || saved === "dark" ? saved : "system";
+      };
+      const applyMode = (mode: ThemeMode, announce = false) => {
+        const resolvedTheme = mode === "system" ? (systemThemeQuery.matches ? "dark" : "light") : mode;
+        if (mode === "system") localStorage.removeItem(THEME_KEY);
+        else localStorage.setItem(THEME_KEY, mode);
+        document.documentElement.dataset.theme = resolvedTheme;
+        document.documentElement.dataset.themeMode = mode;
+        document.documentElement.style.colorScheme = resolvedTheme;
+        document.querySelector("[data-theme-color]")?.setAttribute("content", resolvedTheme === "dark" ? "#101411" : "#f2f4ef");
+        themeButton.dataset.mode = mode;
+        const currentLabel = mode === "system" ? "跟随系统" : mode === "light" ? "浅色" : "深色";
+        const nextLabel = mode === "system" ? "浅色" : mode === "light" ? "深色" : "跟随系统";
+        themeButton.setAttribute("aria-label", `当前为${currentLabel}主题，点击切换到${nextLabel}`);
+        themeButton.title = `主题：${currentLabel}`;
+        if (announce && themeStatus) themeStatus.textContent = `已切换为${currentLabel}主题`;
+      };
+      applyMode(readMode());
+      themeButton.onclick = () => {
+        const current = readMode();
+        const next: ThemeMode = current === "system" ? "light" : current === "light" ? "dark" : "system";
+        applyMode(next, true);
+      };
+    }
+
+    const menuButton = document.querySelector<HTMLButtonElement>("[data-menu-toggle]");
+    const mobileNav = document.querySelector<HTMLElement>("[data-mobile-nav]");
+    if (menuButton && mobileNav) {
+      const closeMenu = () => {
+        menuButton.setAttribute("aria-expanded", "false");
+        menuButton.setAttribute("aria-label", "打开导航");
+        mobileNav.hidden = true;
+      };
+      menuButton.onclick = () => {
+        const isOpen = menuButton.getAttribute("aria-expanded") === "true";
+        menuButton.setAttribute("aria-expanded", String(!isOpen));
+        menuButton.setAttribute("aria-label", isOpen ? "打开导航" : "关闭导航");
+        mobileNav.hidden = isOpen;
+      };
+      const handleBreakpointChange = (event: MediaQueryListEvent) => {
+        if (event.matches) closeMenu();
+      };
+      const handleNavClick = (event: Event) => {
+        if ((event.target as HTMLElement).closest("a")) closeMenu();
+      };
+      desktopQuery.addEventListener("change", handleBreakpointChange);
+      mobileNav.addEventListener("click", handleNavClick);
+      cleanups.push(() => desktopQuery.removeEventListener("change", handleBreakpointChange));
+      cleanups.push(() => mobileNav.removeEventListener("click", handleNavClick));
+      if (desktopQuery.matches) closeMenu();
+    }
+
+    const dialog = document.querySelector<HTMLDialogElement>("[data-search-dialog]");
+    const searchInput = document.querySelector<HTMLInputElement>("[data-search-input]");
+    const list = document.querySelector<HTMLElement>("[data-search-list]");
+    const count = document.querySelector<HTMLElement>("[data-search-count]");
+    const empty = document.querySelector<HTMLElement>("[data-search-empty]");
+    const openButton = document.querySelector<HTMLButtonElement>("[data-search-open]");
+    const closeButton = document.querySelector<HTMLButtonElement>("[data-search-close]");
+    const total = Number(count?.dataset.total ?? 0);
+
+    if (dialog && searchInput && openButton && list) {
+      let previouslyFocused: HTMLElement | null = null;
+      let index: SearchIndex | null = null;
+      let debounce = 0;
+
+      const render = (docs: SearchDoc[], query: string) => {
+        const fragment = document.createDocumentFragment();
+        for (const doc of docs) {
+          const anchor = document.createElement("a");
+          anchor.className = "search-result";
+          anchor.href = doc.h;
+          anchor.dataset.category = doc.c;
+          const span = document.createElement("span");
+          span.textContent = doc.l;
+          const strong = document.createElement("strong");
+          strong.textContent = doc.t;
+          const small = document.createElement("small");
+          small.textContent = `${doc.m} 分钟阅读`;
+          anchor.append(span, strong, small);
+          fragment.append(anchor);
+        }
+        list.replaceChildren(fragment);
+        if (count) count.textContent = query ? `找到 ${docs.length} 篇文章` : `全部 ${total} 篇文章`;
+        if (empty) empty.hidden = docs.length !== 0;
+      };
+
+      const runQuery = () => {
+        if (!index) return;
+        render(queryIndex(index, searchInput.value.trim()), searchInput.value.trim());
+      };
+
+      openButton.onclick = async () => {
+        if (dialog.open) return;
+        const activeElement = document.activeElement;
+        previouslyFocused = activeElement instanceof HTMLElement && activeElement !== document.body
+          ? activeElement
+          : openButton;
+        dialog.showModal();
+        requestAnimationFrame(() => searchInput.focus());
+        if (!index) {
+          if (count) count.textContent = "加载索引中…";
+          try {
+            index = await loadSearchIndex();
+            runQuery();
+          } catch {
+            if (count) count.textContent = "索引加载失败，请重试";
+          }
+        }
+      };
+      if (closeButton) closeButton.onclick = () => dialog.close();
+      dialog.onclick = (event) => { if (event.target === dialog) dialog.close(); };
+      dialog.onclose = () => {
+        if (previouslyFocused?.isConnected) previouslyFocused.focus();
+        previouslyFocused = null;
+      };
+      searchInput.oninput = () => {
+        window.clearTimeout(debounce);
+        debounce = window.setTimeout(runQuery, 90);
+      };
+      cleanups.push(() => window.clearTimeout(debounce));
+    }
+
+    cleanupHeader = () => {
+      for (const cleanup of cleanups) cleanup();
+    };
+  }
+
+  document.addEventListener("astro:page-load", setupHeader);
+  setupHeader();
+</script>

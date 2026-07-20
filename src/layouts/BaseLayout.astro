@@ -1,0 +1,132 @@
+---
+import { ClientRouter } from "astro:transitions";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { site } from "@/data/site";
+import "@/styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  imageAlt?: string;
+  article?: {
+    publishedAt: Date | string;
+    updatedAt?: Date | string;
+    author?: string;
+    section?: string;
+    tags?: string[];
+  };
+}
+
+const {
+  title = site.name,
+  description = site.description,
+  image = "/images/hero.webp",
+  imageAlt = description,
+  article,
+} = Astro.props;
+const pageTitle = title === site.name ? title : `${title} · ${site.name}`;
+const siteUrl = Astro.site ?? new URL(Astro.url.origin);
+const canonical = new URL(Astro.url.pathname, siteUrl);
+const imageUrl = new URL(image, siteUrl);
+const rssUrl = new URL("/rss.xml", siteUrl);
+const publishedAt = article ? new Date(article.publishedAt).toISOString() : undefined;
+const updatedAt = article
+  ? new Date(article.updatedAt ?? article.publishedAt).toISOString()
+  : undefined;
+const articleAuthor = article?.author ?? site.author;
+const jsonLd = article
+  ? {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: title,
+      description,
+      image: imageUrl.toString(),
+      url: canonical.toString(),
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": canonical.toString(),
+      },
+      datePublished: publishedAt,
+      dateModified: updatedAt,
+      author: {
+        "@type": "Person",
+        name: articleAuthor,
+      },
+      publisher: {
+        "@type": "Person",
+        name: site.author,
+      },
+      inLanguage: "zh-CN",
+      ...(article.section ? { articleSection: article.section } : {}),
+      ...(article.tags?.length ? { keywords: article.tags } : {}),
+    }
+  : undefined;
+const serializedJsonLd = jsonLd
+  ? JSON.stringify(jsonLd).replace(/</g, "\\u003c")
+  : undefined;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f2f4ef" data-theme-color />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:alt" content={imageAlt} />
+    <meta property="og:type" content={article ? "article" : "website"} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:locale" content="zh_CN" />
+    {publishedAt && <meta property="article:published_time" content={publishedAt} />}
+    {updatedAt && <meta property="article:modified_time" content={updatedAt} />}
+    {article?.section && <meta property="article:section" content={article.section} />}
+    {article?.tags?.map((tag) => <meta property="article:tag" content={tag} />)}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
+    <meta name="twitter:image:alt" content={imageAlt} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/rss+xml" title={`${site.name} RSS`} href={rssUrl} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {serializedJsonLd && <script is:inline type="application/ld+json" set:html={serializedJsonLd} />}
+    <title>{pageTitle}</title>
+    <script is:inline>
+      (() => {
+        const key = "fuguang-theme";
+        const saved = localStorage.getItem(key);
+        const mode = saved === "light" || saved === "dark" ? saved : "system";
+        if (saved && mode === "system") localStorage.removeItem(key);
+        const theme = mode === "system" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : mode === "system" ? "light" : mode;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.themeMode = mode;
+        document.documentElement.style.colorScheme = theme;
+        document.querySelector("[data-theme-color]")?.setAttribute("content", theme === "dark" ? "#101411" : "#f2f4ef");
+        matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+          if (!localStorage.getItem(key)) {
+            const next = event.matches ? "dark" : "light";
+            document.documentElement.dataset.theme = next;
+            document.documentElement.style.colorScheme = next;
+            document.documentElement.dataset.themeMode = "system";
+            document.querySelector("[data-theme-color]")?.setAttribute("content", next === "dark" ? "#101411" : "#f2f4ef");
+          }
+        });
+      })();
+    </script>
+    <ClientRouter />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到正文</a>
+    <Header />
+    <main id="main-content">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

@@ -1,0 +1,67 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PostRow from "@/components/PostRow.astro";
+import ResponsiveImage from "@/components/ResponsiveImage.astro";
+import { categories, categoryOrder, type CategoryKey } from "@/data/site";
+import { postHref, sortPosts } from "@/lib/posts";
+
+export function getStaticPaths() {
+  return categoryOrder.map((category) => ({ params: { category }, props: { category } }));
+}
+
+const key = Astro.props.category as CategoryKey;
+const category = categories[key];
+const posts = sortPosts(
+  await getCollection("posts", ({ data }) => !data.draft && data.category === key),
+);
+const lead = posts[0];
+---
+
+<BaseLayout title={`${category.label} · ${category.moduleTitle}`} description={category.description} image={category.cover}>
+  <header class={`category-hero category-page-${key}`} style={`--category-accent:${category.accent}`}>
+    <ResponsiveImage src={category.cover} alt="" sizes="100vw" loading="eager" fetchpriority="high" />
+    <div class="category-hero-overlay"></div>
+    <div class="shell category-hero-inner">
+      <div>
+        <span>{category.english} / {category.share}</span>
+        <h1>{category.moduleTitle}</h1>
+        <p>{category.description}</p>
+      </div>
+      <strong>{category.label}</strong>
+    </div>
+  </header>
+
+  <section class="category-posts shell section-space">
+    <header class="category-posts-head">
+      <span>{String(posts.length).padStart(2, "0")} STORIES</span>
+      <h2>这一方向的全部记录</h2>
+    </header>
+    {lead && (
+      <a class="category-lead" href={postHref(lead)}>
+        <ResponsiveImage src={lead.data.cover} alt={lead.data.coverAlt} sizes="(max-width: 680px) 100vw, 55vw" />
+        <div>
+          <span>最新发布</span>
+          <h3>{lead.data.title}</h3>
+          <p>{lead.data.summary}</p>
+          <b>阅读全文 ↗</b>
+        </div>
+      </a>
+    )}
+    {lead ? (
+      <div class="category-list">
+        {posts.slice(1).map((post, index) => <PostRow post={post} index={index + 1} />)}
+      </div>
+    ) : (
+      <div class="category-empty" role="status">
+        <strong>这一条线还没有公开记录</strong>
+        <p>文章发布后，会按照时间自动出现在这里。</p>
+      </div>
+    )}
+  </section>
+
+  <nav class="category-switcher shell" aria-label="切换内容分类">
+    <span>继续浏览</span>
+    {categoryOrder.filter((item) => item !== key).map((item) => <a href={`/category/${item}/`}>{categories[item].label}<small>{categories[item].moduleTitle}</small></a>)}
+  </nav>
+</BaseLayout>

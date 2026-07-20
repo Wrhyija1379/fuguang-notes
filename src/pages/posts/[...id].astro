@@ -1,0 +1,107 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PostRow from "@/components/PostRow.astro";
+import ResponsiveImage from "@/components/ResponsiveImage.astro";
+import { categories } from "@/data/site";
+import { formatDate, getReadingMinutes, sortPosts } from "@/lib/posts";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
+}
+
+interface Props {
+  post: CollectionEntry<"posts">;
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const category = categories[post.data.category];
+const allPosts = sortPosts(await getCollection("posts", ({ data }) => !data.draft));
+const related = allPosts
+  .filter((item) => item.id !== post.id && item.data.category === post.data.category)
+  .slice(0, 3);
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.summary}
+  image={post.data.cover}
+  imageAlt={post.data.coverAlt}
+  article={{
+    publishedAt: post.data.publishedAt,
+    updatedAt: post.data.updatedAt,
+    section: category.label,
+    tags: post.data.tags,
+  }}
+>
+  <article class="article-page" style={`--article-accent:${category.accent}`}>
+    <header class="article-hero">
+      <ResponsiveImage src={post.data.cover} alt={post.data.coverAlt} sizes="100vw" loading="eager" fetchpriority="high" />
+      <div class="article-hero-overlay"></div>
+      <div class="shell article-hero-inner">
+        <a class="article-category" href={`/category/${post.data.category}/`}>{category.label} · {category.moduleTitle}</a>
+        <h1>{post.data.title}</h1>
+        <p>{post.data.summary}</p>
+        <div class="article-meta">
+          <time datetime={post.data.publishedAt.toISOString()}>{formatDate(post.data.publishedAt)}</time>
+          {post.data.updatedAt && (
+            <span>更新于 <time datetime={post.data.updatedAt.toISOString()}>{formatDate(post.data.updatedAt)}</time></span>
+          )}
+          <span>{getReadingMinutes(post)} 分钟阅读</span>
+          <span>{post.data.tags.join(" / ")}</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="shell article-layout">
+      <aside class="article-aside">
+        <a href="/">← 返回首页</a>
+        <div>
+          <span>本篇目录</span>
+          {
+            headings.length > 0 ? (
+              <ol>
+                {headings.filter((heading) => heading.depth <= 3).map((heading) => <li><a href={`#${heading.slug}`}>{heading.text}</a></li>)}
+              </ol>
+            ) : (
+              <p>一篇短记录，慢慢读完就好。</p>
+            )
+          }
+        </div>
+      </aside>
+      <div class="article-main">
+        {headings.length > 0 && (
+          <details class="mobile-toc">
+            <summary>本篇目录 <span aria-hidden="true">＋</span></summary>
+            <ol>
+              {headings.filter((heading) => heading.depth <= 3).map((heading) => <li><a href={`#${heading.slug}`}>{heading.text}</a></li>)}
+            </ol>
+          </details>
+        )}
+        <div class="article-prose">
+          <Content />
+        </div>
+      </div>
+    </div>
+
+    <footer class="article-end shell">
+      <div>
+        <span>写于 {formatDate(post.data.publishedAt)}</span>
+        <p>感谢你把时间留在这里。</p>
+      </div>
+      <a href={`/category/${post.data.category}/`}>继续浏览「{category.label}」<span aria-hidden="true">↗</span></a>
+    </footer>
+  </article>
+
+  {related.length > 0 && (
+    <section class="related-posts shell section-space">
+      <header class="simple-heading">
+        <span>NEXT READING</span>
+        <h2>同一条线上的记录</h2>
+      </header>
+      <div>{related.map((item, index) => <PostRow post={item} index={index} />)}</div>
+    </section>
+  )}
+</BaseLayout>

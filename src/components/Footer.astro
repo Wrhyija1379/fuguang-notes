@@ -1,0 +1,32 @@
+---
+import { categories, categoryOrder, site } from "@/data/site";
+---
+
+<footer class="site-footer">
+  <div class="shell footer-grid">
+    <div class="footer-intro">
+      <span class="brand-mark" aria-hidden="true">浮</span>
+      <div>
+        <strong>{site.name}</strong>
+        <p>{site.description}</p>
+      </div>
+    </div>
+    <div class="footer-links">
+      <div>
+        <strong>浏览</strong>
+        {categoryOrder.map((key) => <a href={`/category/${key}/`}>{categories[key].label}</a>)}
+      </div>
+      <div>
+        <strong>更多</strong>
+        <a href="/archive/">文章归档</a>
+        <a href="/about/">关于作者</a>
+        <a href="/rss.xml">RSS 订阅</a>
+        {site.email && <a href={`mailto:${site.email}`}>邮件联系</a>}
+      </div>
+    </div>
+  </div>
+  <div class="shell footer-bottom">
+    <span>© 2026 {site.author}</span>
+    <span>认真写作，缓慢更新。</span>
+  </div>
+</footer>
