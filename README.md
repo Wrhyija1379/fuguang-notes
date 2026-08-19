@@ -74,6 +74,29 @@ feed / sitemap / robots 一小时缓存。部署平台未读取 `_headers` 时�
 逐篇封面（`post-*`）从既有素材按语义裁切不同区域、宽高比与色调生成。修改原图或
 封面任务后请重新执行该命令。
 
+## 从 Obsidian 导入文章
+
+`npm run import:post` 从笔记库导入一篇笔记到 `src/content/posts/`：
+
+```bash
+npm run import:post                          # 交互选择笔记
+npm run import:post "笔记相对路径"            # 直接指定笔记
+npm run import:post 笔记路径 --yes --title "标题" --category tech --tags "a,b" --deploy
+```
+
+- 笔记库默认 `E:\BaiduSyncdisk\Notes`（WSL 下 `/mnt/e/BaiduSyncdisk/Notes`），
+  可用环境变量 `OBSIDIAN_VAULT` 覆盖；自动排除 `Draft`/`草稿`/`assets`。
+- 自动从笔记生成 frontmatter（标题、摘要、分类、标签、日期）、复制一张封面并
+  在 `ResponsiveImage.astro` 登记尺寸。
+- `--yes` 跳过全部交互；`--deploy` 在导入后构建并部署 gh-pages（需 `GH_TOKEN`）。
+
+发布命令（需 `GH_TOKEN` 环境变量）：
+
+```bash
+npm run deploy:pages   # 把 dist/ 部署到 gh-pages 分支
+npm run deploy:main    # 把源码同步到 main 分支
+```
+
 改进审计和后续实施顺序记录在 [`IMPROVEMENTS.md`](./IMPROVEMENTS.md)。
 
 ## 图片来源
