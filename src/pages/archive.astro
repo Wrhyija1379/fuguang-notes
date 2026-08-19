@@ -8,7 +8,7 @@ const posts = sortPosts(await getCollection("posts", ({ data }) => !data.draft))
 const years = [...new Set(posts.map((post) => post.data.publishedAt.getFullYear()))];
 ---
 
-<BaseLayout title="文章归档" description="浮光笔记的全部文章，按发布时间排列。">
+<BaseLayout title="文章归档" description="浮光note 的全部文章，按发布时间排列。">
   <header class="page-intro shell">
     <span>ALL STORIES</span>
     <h1>文章归档</h1>

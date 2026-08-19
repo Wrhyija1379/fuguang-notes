@@ -1,12 +1,12 @@
 [简体中文](./README.md) | **English**
 
-# Fuguang Notes
+# Fuguang Note
 
 A hand-built Astro blog template with a Chinese-first design, developed to
 personal taste. It runs at <http://127.0.0.1:4330/> by default.
 
-The name 浮光笔记 ("Fuguang Notes") is the demo brand; author `林屿` and all
-copy are placeholders you are meant to replace.
+Content focuses on security techniques, CTF writeups, and reading notes,
+adapted from a personal Obsidian vault. Author: `Theologian25`.
 
 ## Requirements
 
@@ -59,8 +59,8 @@ development — do not publish with that fallback.
 variants under `public/images/`. Re-run it after changing any original.
 
 Content lives in `src/content/posts/`; site-wide config (name, author, email,
-categories) is centralized in `src/data/site.ts`. The email entry is empty by
-default, and the mail link only appears once you fill it in.
+categories) is centralized in `src/data/site.ts`. The email link only appears
+once you fill it in.
 
 Improvement audit and roadmap are tracked in [`IMPROVEMENTS.md`](./IMPROVEMENTS.md).
 
@@ -85,6 +85,5 @@ static output.
 
 ## License
 
-[MIT](./LICENSE) © 2026 Wrhyija1379. Article text and the demo brand are
-placeholder content; the photography is under the Unsplash License as credited
-above.
+[MIT](./LICENSE) © 2026 Wrhyija1379. Article text is the author's own work;
+the photography is under the Unsplash License as credited above.

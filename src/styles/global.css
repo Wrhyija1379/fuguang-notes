@@ -8,15 +8,17 @@
   --line: rgba(23, 27, 25, 0.16);
   --line-strong: rgba(23, 27, 25, 0.34);
   --header-bg: rgba(242, 244, 239, 0.88);
-  --tech: #72f5b1;
-  --coral: #ff765e;
+  --tech: #3ecf8e;
+  --accent: #e6eef0;
+  --gold: #d8a73e;
   --red: #e3342f;
-  --yellow: #f4d73b;
+  --purple: #9b6bff;
   --blue: #5ca8ff;
-  --tech-text: #316e52;
-  --coral-text: #b34435;
+  --tech-text: #1f7a50;
+  --accent-text: #45697a;
+  --gold-text: #8a6a1f;
   --red-text: #9d2f25;
-  --yellow-text: #665900;
+  --purple-text: #5b3bb0;
   --blue-text: #2d68a0;
   --focus-ring: #236c4d;
   --display: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", STSong, serif;
@@ -35,12 +37,14 @@
   --line: rgba(241, 242, 236, 0.15);
   --line-strong: rgba(241, 242, 236, 0.34);
   --header-bg: rgba(16, 20, 17, 0.9);
-  --tech-text: #72f5b1;
-  --coral-text: #ff8b76;
+  --tech-text: #3ecf8e;
+  --accent: #cfe0e3;
+  --accent-text: #b9d3da;
+  --gold-text: #e7c15c;
   --red-text: #ff817b;
-  --yellow-text: #f4d73b;
-  --blue-text: #78b6ff;
-  --focus-ring: #72f5b1;
+  --purple: #b892ff;
+  --purple-text: #c3a3ff;
+  --focus-ring: #2fd393;
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
 }
 
@@ -68,7 +72,7 @@ body {
 }
 
 body::selection {
-  background: var(--tech);
+  background: var(--accent);
   color: #101411;
 }
 
@@ -147,7 +151,7 @@ h3 {
   left: 10px;
   padding: 10px 14px;
   transform: translateY(-160%);
-  background: var(--tech);
+  background: var(--accent);
   color: #101411;
   font-weight: 800;
 }
@@ -234,7 +238,7 @@ h3 {
   height: 2px;
   transform: scaleX(0);
   transform-origin: left;
-  background: var(--coral);
+  background: var(--accent-text);
   content: "";
   transition: transform 180ms ease;
 }
@@ -393,7 +397,7 @@ h3 {
 }
 
 .mobile-nav a[aria-current="page"] {
-  border-color: var(--coral);
+  border-color: var(--accent-text);
   color: var(--ink);
   font-weight: 800;
 }
@@ -499,15 +503,15 @@ h3 {
 }
 
 .search-result > span {
-  color: var(--coral-text);
+  color: var(--accent-text);
   font-size: 12px;
   font-weight: 800;
 }
 
 .search-result[data-category="tech"] > span { color: var(--tech-text); }
-.search-result[data-category="life"] > span { color: var(--coral-text); }
+.search-result[data-category="life"] > span { color: var(--gold-text); }
 .search-result[data-category="reading"] > span { color: var(--red-text); }
-.search-result[data-category="gaming"] > span { color: var(--yellow-text); }
+.search-result[data-category="gaming"] > span { color: var(--purple-text); }
 
 .search-result strong {
   overflow: hidden;
@@ -523,7 +527,7 @@ h3 {
 }
 
 .search-result:hover strong {
-  color: var(--coral-text);
+  color: var(--accent-text);
 }
 
 .search-empty {
@@ -664,7 +668,7 @@ h3 {
 
 .hero-note > span {
   display: block;
-  color: var(--coral);
+  color: var(--accent-text);
   font-family: var(--display);
   font-size: 70px;
   line-height: 0.9;
@@ -696,7 +700,7 @@ h3 {
 .page-intro > span {
   display: block;
   margin-bottom: 10px;
-  color: var(--coral-text);
+  color: var(--accent-text);
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 800;
@@ -994,9 +998,9 @@ h3 {
 .now-building {
   margin-top: auto;
   padding: 24px;
-  border: 1px solid rgba(114, 245, 177, 0.32);
+  border: 1px solid rgba(62, 207, 142, 0.32);
   border-radius: 5px;
-  background: rgba(114, 245, 177, 0.06);
+  background: rgba(62, 207, 142, 0.06);
 }
 
 .now-building > div {
@@ -1013,7 +1017,7 @@ h3 {
   height: 7px;
   border-radius: 50%;
   background: var(--tech);
-  box-shadow: 0 0 0 4px rgba(114, 245, 177, 0.12);
+  box-shadow: 0 0 0 4px rgba(62, 207, 142, 0.12);
 }
 
 .now-building strong {
@@ -1041,7 +1045,7 @@ h3 {
   right: max(32px, calc((100% - 1220px) / 2));
   width: 96px;
   height: 9px;
-  background: var(--coral);
+  background: var(--gold);
   content: "";
 }
 
@@ -1133,7 +1137,7 @@ h3 {
 
 .life-notes > a > span,
 .life-notes time {
-  color: var(--coral-text);
+  color: var(--gold-text);
   font-family: var(--mono);
   font-size: 10px;
 }
@@ -1287,7 +1291,7 @@ h3 {
 }
 
 .gaming-feature > header {
-  color: var(--yellow);
+  color: var(--purple);
 }
 
 .gaming-copy {
@@ -1299,7 +1303,7 @@ h3 {
 }
 
 .gaming-copy small {
-  color: var(--yellow);
+  color: var(--purple);
   font-family: var(--mono);
   font-size: 9px;
 }
@@ -1334,7 +1338,7 @@ h3 {
 }
 
 .game-status b {
-  color: var(--yellow);
+  color: var(--purple);
   font-family: var(--mono);
   font-size: 17px;
 }
@@ -1362,7 +1366,7 @@ h3 {
 }
 
 .timeline-head > span {
-  color: var(--coral-text);
+  color: var(--accent-text);
   font-family: var(--mono);
   font-size: 10px;
 }
@@ -1400,8 +1404,8 @@ h3 {
   height: 9px;
   border: 2px solid var(--surface);
   border-radius: 50%;
-  background: var(--coral);
-  box-shadow: 0 0 0 1px var(--coral);
+  background: var(--accent-text);
+  box-shadow: 0 0 0 1px var(--accent-text);
   content: "";
 }
 
@@ -1412,7 +1416,7 @@ h3 {
 }
 
 .timeline li span {
-  color: var(--coral-text);
+  color: var(--accent-text);
   font-size: 10px;
   font-weight: 800;
 }
@@ -1432,7 +1436,7 @@ h3 {
 
 .home-signoff {
   padding-block: 88px;
-  background: var(--coral);
+  background: var(--accent);
   color: #17120f;
 }
 
@@ -1485,7 +1489,7 @@ h3 {
 }
 
 .footer-intro .brand-mark {
-  background: var(--tech);
+  background: var(--accent);
   color: #0d100f;
 }
 
@@ -1516,7 +1520,7 @@ h3 {
 
 .footer-links strong {
   margin-bottom: 8px;
-  color: var(--tech);
+  color: var(--accent-text);
   font-family: var(--mono);
   font-size: 9px;
 }
@@ -2085,7 +2089,7 @@ h3 {
 }
 
 .about-hero span {
-  color: var(--tech);
+  color: var(--accent-text);
   font-family: var(--mono);
   font-size: 10px;
 }
@@ -2142,7 +2146,7 @@ h3 {
 }
 
 .about-copy > span {
-  color: var(--coral-text);
+  color: var(--accent-text);
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 800;
@@ -2165,7 +2169,7 @@ h3 {
 .about-copy blockquote {
   margin: 42px 0;
   padding: 26px;
-  border-left: 4px solid var(--coral);
+  border-left: 4px solid var(--accent-text);
   background: var(--surface-2);
   font-family: var(--display);
   font-size: 21px;
@@ -2430,7 +2434,7 @@ h3 {
 
 .home-empty > span {
   margin-bottom: 13px;
-  color: var(--coral-text);
+  color: var(--accent-text);
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 800;
@@ -2447,6 +2451,17 @@ h3 {
 .home-empty p {
   margin: 0;
   color: var(--muted);
+}
+
+.not-found-actions {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-top: 30px;
+}
+
+.not-found-actions .text-link {
+  margin-bottom: 2px;
 }
 
 .culture-grid.single {

@@ -14,9 +14,12 @@ const escapeXml = (value: string) =>
 
 export const GET: APIRoute = async ({ site: configuredSite, url }) => {
   const baseUrl = configuredSite ?? new URL(url.origin);
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
   const posts = sortPosts(await getCollection("posts", ({ data }) => !data.draft));
-  const channelUrl = new URL("/", baseUrl).toString();
-  const feedUrl = new URL("/rss.xml", baseUrl).toString();
+  const resolveUrl = (path: string) =>
+    new URL(`${basePath}${path.startsWith("/") ? path : `/${path}`}`, baseUrl).toString();
+  const channelUrl = resolveUrl("/");
+  const feedUrl = resolveUrl("/rss.xml");
   const lastBuildDate = posts.reduce((latest, post) => {
     const changedAt = post.data.updatedAt ?? post.data.publishedAt;
     return changedAt > latest ? changedAt : latest;

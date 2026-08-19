@@ -10,27 +10,27 @@ import { site } from "@/data/site";
     <div class="about-hero-overlay"></div>
     <div class="shell">
       <span>ABOUT THE AUTHOR</span>
-      <h1>在技术与日常之间，<br />留下可以回看的坐标。</h1>
+      <h1>在技术与阅读之间，<br />留下可以反复回看的坐标。</h1>
     </div>
   </header>
 
   <section class="about-content shell section-space">
     <aside>
-      <div class="author-monogram">LY</div>
+      <div class="author-monogram">{site.monogram}</div>
       <strong>{site.author}</strong>
       <span>{site.role}</span>
       {site.email && <a href={`mailto:${site.email}`}>写封邮件 ↗</a>}
     </aside>
     <div class="about-copy">
-      <span>你好，我是林屿。</span>
-      <h2>我喜欢把复杂问题讲清楚，也愿意为普通日子多停留一会。</h2>
-      <p>白天做产品与开发，晚上整理代码、读书和散步时留下的片段。这个博客不是一份履历，也不追求高频更新；它更像一块长期维护的个人空间。</p>
-      <p>技术文章会尽量保留问题发生的背景和决策过程，而不是只给出最终答案。生活、读书与游戏则使用更轻的笔触，因为有些经验不需要被总结成方法。</p>
+      <span>你好，我是 Theologian25。</span>
+      <h2>我喜欢把安全问题讲清楚，也愿意为读过的书多停留一会。</h2>
+      <p>白天学习与练习安全测试，晚上整理 CTF 复盘、漏洞原理和读书时留下的批注。这个博客不是一份履历，也不追求高频更新；它更像一块长期维护的个人知识库。</p>
+      <p>技术文章会尽量保留问题发生的背景和决策过程，而不是只给出最终答案。读书笔记则区分"作者说了什么"和"我认为哪里需要打个问号"，因为诚实的批注比复述更重要。</p>
       <blockquote>愿意把一件事讲清楚，是我理解的诚意；愿意承认尚未想明白，也是。</blockquote>
       <div class="about-facts">
-        <div><strong>50%</strong><span>技术与实践</span></div>
-        <div><strong>30%</strong><span>生活与城市</span></div>
-        <div><strong>20%</strong><span>书与游戏</span></div>
+        <div><strong>50%</strong><span>安全技术</span></div>
+        <div><strong>30%</strong><span>CTF 复盘</span></div>
+        <div><strong>20%</strong><span>读书笔记</span></div>
       </div>
     </div>
   </section>

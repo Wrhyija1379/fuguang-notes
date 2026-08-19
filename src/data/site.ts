@@ -1,10 +1,11 @@
 export const site = {
-  name: "浮光笔记",
+  name: "浮光note",
   shortName: "浮光",
-  description: "写代码，也写那些值得慢下来看的日常。",
-  author: "林屿",
-  role: "独立开发者 / 长期主义的记录者",
-  email: "",
+  description: "安全技术、CTF 复盘与读书笔记，记录那些值得再想一遍的问题。",
+  author: "Theologian25 · 愚者",
+  role: "无可失去的使人变成勇者",
+  email: "theologian25@qq.com",
+  monogram: "T25",
 };
 
 export const categoryOrder = ["tech", "life", "reading", "gaming"] as const;
@@ -26,9 +27,9 @@ export const categories: Record<
     label: "技术",
     moduleTitle: "编译现场",
     english: "Build Log",
-    description: "工程实践、工具实验，以及那些真正解决问题的代码。",
+    description: "渗透测试、CTF 复盘与安全原理，把每一次尝试整理成可复用的经验。",
     cover: "/images/tech.webp",
-    accent: "#72f5b1",
+    accent: "#3ecf8e",
     share: "50%",
   },
   life: {
@@ -37,7 +38,7 @@ export const categories: Record<
     english: "Field Notes",
     description: "散步、食物、房间与注意力，记录生活里缓慢发生的变化。",
     cover: "/images/life.webp",
-    accent: "#ff765e",
+    accent: "#d8a73e",
     share: "30%",
   },
   reading: {
@@ -55,34 +56,34 @@ export const categories: Record<
     english: "Save Point",
     description: "不做流水账，只保存那些真正改变体验的瞬间。",
     cover: "/images/gaming.webp",
-    accent: "#f4d73b",
+    accent: "#9b6bff",
     share: "10%",
   },
 };
 
 export const moments = [
   {
-    date: "07.18",
-    type: "项目",
-    title: "把博客首页拆成四种内容语气",
-    note: "技术需要密度，生活需要呼吸，书和游戏都值得拥有自己的舞台。",
+    date: "08.19",
+    type: "学习",
+    title: "整理安全测试分析笔记",
+    note: "把 151 篇 Obsidian 笔记梳理成可检索的知识库，沉淀到浮光note。",
   },
   {
-    date: "07.14",
+    date: "08.12",
     type: "阅读",
-    title: "重读《禅与摩托车维修艺术》",
-    note: "在页边重新写下：技术质量从来不只是指标。",
+    title: "批注《为什么你攒不下钱？》",
+    note: "最值得留下的不是公式，而是把金钱放回日常生活资产负债表的方法。",
   },
   {
-    date: "07.09",
-    type: "散步",
-    title: "完成城南步行地图第一版",
-    note: "标了 7 家小店、3 条树荫路和一个适合发呆的长椅。",
+    date: "07.28",
+    type: "CTF",
+    title: "LitCTF EasySql 复盘",
+    note: "字符串型判断、debug 泄露、宽字节绕过到 UNION 取数，链路完整。",
   },
   {
-    date: "07.03",
-    type: "游戏",
-    title: "《Outer Wilds》航行日志归档",
-    note: "最后留下的不是通关，而是一次关于好奇心的练习。",
+    date: "07.20",
+    type: "环境",
+    title: "ArchWSL 图形化配置完成",
+    note: "密钥环、KDE Plasma、fcitx5 与一键启动脚本，全程记录在案。",
   },
 ];

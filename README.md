@@ -1,6 +1,6 @@
 **简体中文** | [English](./README.en.md)
 
-# 浮光笔记
+# 浮光note
 
 根据个人偏好定制的 Astro 中文博客原型，默认运行在
 <http://127.0.0.1:4330/>。
@@ -10,8 +10,8 @@
 - Node.js `>=22.12.0`（Astro 7 的运行时要求）
 - npm `11.6.2`（由 `packageManager` 字段声明）
 
-依赖版本已经写入 `package.json`。网络正常时，在项目目录执行
-`npm install` 安装依赖；`node_modules` 目录联接只用于当前断网预览，不能作为部署依赖。
+依赖版本已经写入 `package.json` 和 `package-lock.json`。网络正常时，在项目目录执行
+`npm ci`（或 `npm install`）安装依赖；`npm ci` 会使用 lockfile 做可复现安装。
 
 ## 页面
 
@@ -20,8 +20,12 @@
 - 文章详情、全文搜索、归档、关于、RSS
 - 跟随系统的深浅主题，并支持手动切换
 
-示例作者 `林屿` 和文案目前是占位内容，集中在 `src/data/site.ts`；邮箱默认留空，
-填写后才会显示邮件入口。文章位于 `src/content/posts/`。
+作者资料集中在 `src/data/site.ts`（署名 `Theologian25 · 愚者`、邮箱与简介），
+邮箱留空时页脚和关于页不显示邮件入口。文章位于 `src/content/posts/`。
+
+内容定位为"安全技术、CTF 复盘与读书笔记"。文章改写自个人 Obsidian 笔记库
+（`E:\BaiduSyncdisk\Notes`）；发布前请检查是否包含靶场路径、真实口令、内部
+信息等不宜公开的内容。
 
 ## 本地命令
 
@@ -33,22 +37,42 @@ npm run build
 npm run preview -- --host 127.0.0.1 --port 4330
 ```
 
-正式构建前通过环境变量设置实际域名；`.env.example` 可作为部署平台的变量清单。
-该地址会用于 canonical、Open Graph、RSS、sitemap 和 `robots.txt`：
+## 正式部署
+
+构建产物在 `dist/`，可部署到任意静态托管或 CDN。部署前设置实际域名：
 
 ```powershell
 $env:SITE_URL = "https://blog.example.com"
 npm run build
 ```
 
-没有配置时会回退到本地预览地址 `http://127.0.0.1:4330`，方便断网开发，但不应直接
-用该回退值发布到公网。
+该地址会用于 canonical、Open Graph、RSS、sitemap 和 `robots.txt`；没有配置时回退到
+本地预览地址 `http://127.0.0.1:4330`，方便断网开发，但不应直接用该回退值发布到公网。
+
+### GitHub Pages 子路径部署
+
+当前站点部署在 `https://wrhyija1379.github.io/fuguang-notes/`。子路径部署需同时设置
+`SITE_URL`（站点绝对地址）与 `SITE_BASE`（资源前缀）：
+
+```powershell
+$env:SITE_URL = "https://wrhyija1379.github.io/fuguang-notes"
+$env:SITE_BASE = "/fuguang-notes"
+npm run build
+```
+
+`SITE_BASE` 会用于资源路径、canonical、og:image、RSS、sitemap、robots 与搜索链接，
+避免子路径部署时全部指向域名根。部署时把 `dist/` 内容发布到仓库 `gh-pages` 分支
+（GitHub 仓库 Settings → Pages → Source 选择 `Deploy from a branch` → `gh-pages`）。
+
+`public/_headers` 内置了 Netlify / Cloudflare Pages 通用的缓存策略：
+HTML 不缓存（发布即时可见）、`_astro/` 带哈希资源长缓存（`immutable`）、图片短缓存、
+feed / sitemap / robots 一小时缓存。部署平台未读取 `_headers` 时，请把同名规则
+配置到平台的响应头设置里。
 
 `prepare:images` 使用开发依赖 `sharp`，从 `assets/sources/` 读取原图，生成
-`public/images/` 下的主图和 480 / 960 / 1600 三档 WebP。修改原图后请重新执行该命令。
-当前 `node_modules` 是到 `personal-blog-astropaper/node_modules` 的目录联接，
-用于断网环境下复用本机已有的 Astro 7 和 sharp；网络恢复后应移除该联接并重新执行
-`npm install`。项目源码不依赖其他模板的运行时代码。
+`public/images/` 下的主图和 480 / 960 / 1600 三档 WebP。主图用于分类 fallback，
+逐篇封面（`post-*`）从既有素材按语义裁切不同区域、宽高比与色调生成。修改原图或
+封面任务后请重新执行该命令。
 
 改进审计和后续实施顺序记录在 [`IMPROVEMENTS.md`](./IMPROVEMENTS.md)。
 
@@ -81,5 +105,5 @@ npm run build
 
 ## 许可
 
-代码以 [MIT](./LICENSE) 发布,© 2026 Wrhyija1379。文章正文与示例品牌均为占位内容;
+代码以 [MIT](./LICENSE) 发布,© 2026 Theologian25。文章正文与示例品牌均为占位内容;
 摄影素材遵循 Unsplash License,归属见上。

@@ -14,6 +14,7 @@ const escapeXml = (value: string) =>
 
 export const GET: APIRoute = async ({ site, url }) => {
   const baseUrl = site ?? new URL(url.origin);
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
   const posts = sortPosts(await getCollection("posts", ({ data }) => !data.draft));
   const staticPaths = [
     "/",
@@ -22,8 +23,10 @@ export const GET: APIRoute = async ({ site, url }) => {
     ...categoryOrder.map((category) => `/category/${category}/`),
   ];
 
+  const resolveUrl = (path: string) =>
+    new URL(`${basePath}${path.startsWith("/") ? path : `/${path}`}`, baseUrl).toString();
   const staticEntries = staticPaths.map((path) => `  <url>
-    <loc>${escapeXml(new URL(path, baseUrl).toString())}</loc>
+    <loc>${escapeXml(resolveUrl(path))}</loc>
   </url>`);
   const postEntries = posts.map((post) => `  <url>
     <loc>${escapeXml(new URL(postHref(post), baseUrl).toString())}</loc>

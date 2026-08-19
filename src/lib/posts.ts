@@ -18,7 +18,10 @@ export const formatDate = (date: Date, withYear = true) =>
 export const getCategory = (key: string) =>
   categories[key as CategoryKey] ?? categories.tech;
 
-export const postHref = (post: Post) => `/posts/${post.id}/`;
+export const postHref = (post: Post) => {
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+  return `${basePath}/posts/${post.id}/`;
+};
 
 const CHINESE_CHARACTER = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/g;
 const LATIN_WORD = /[A-Za-z]+(?:['’-][A-Za-z]+)*/g;

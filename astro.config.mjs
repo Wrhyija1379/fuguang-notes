@@ -16,6 +16,7 @@ try {
 
 export default defineConfig({
   site: siteUrl,
+  base: process.env.SITE_BASE?.trim() || "/",
   server: {
     host: "127.0.0.1",
     port: 4330,
