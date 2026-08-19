@@ -1,5 +1,6 @@
 ---
 import { categories, categoryOrder, site } from "@/data/site";
+import { href } from "@/lib/url";
 ---
 
 <footer class="site-footer">
@@ -14,13 +15,13 @@ import { categories, categoryOrder, site } from "@/data/site";
     <div class="footer-links">
       <div>
         <strong>浏览</strong>
-        {categoryOrder.map((key) => <a href={`/category/${key}/`}>{categories[key].label}</a>)}
+        {categoryOrder.map((key) => <a href={href(`/category/${key}/`)}>{categories[key].label}</a>)}
       </div>
       <div>
         <strong>更多</strong>
-        <a href="/archive/">文章归档</a>
-        <a href="/about/">关于作者</a>
-        <a href="/rss.xml">RSS 订阅</a>
+        <a href={href("/archive/")}>文章归档</a>
+        <a href={href("/about/")}>关于作者</a>
+        <a href={href("/rss.xml")}>RSS 订阅</a>
         {site.email && <a href={`mailto:${site.email}`}>邮件联系</a>}
       </div>
     </div>

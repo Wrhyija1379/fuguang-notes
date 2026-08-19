@@ -1,16 +1,17 @@
 ---
 import { getCollection } from "astro:content";
 import { categories, categoryOrder, site } from "@/data/site";
+import { href, isCurrentPath } from "@/lib/url";
 
 // 仅用于首屏计数;搜索数据改由 /search-index.json 懒加载(避免每页内联全文)。
 const postCount = (await getCollection("posts", ({ data }) => !data.draft)).length;
 const path = Astro.url.pathname;
-const isCurrent = (href: string) => href === "/" ? path === "/" : path.startsWith(href);
+const isCurrent = (target: string) => isCurrentPath(path, target);
 ---
 
 <header class="site-header" data-header>
   <div class="header-inner shell">
-    <a class="brand" href="/" aria-label={`${site.name}首页`}>
+    <a class="brand" href={href("/")} aria-label={`${site.name}首页`}>
       <span class="brand-mark" aria-hidden="true">浮</span>
       <span class="brand-copy">
         <strong>{site.name}</strong>
@@ -19,20 +20,20 @@ const isCurrent = (href: string) => href === "/" ? path === "/" : path.startsWit
     </a>
 
     <nav class="desktop-nav" aria-label="主导航">
-      <a class:list={[{ active: isCurrent("/") }]} href="/" aria-current={isCurrent("/") ? "page" : undefined}>首页</a>
+      <a class:list={[{ active: isCurrent("/") }]} href={href("/")} aria-current={isCurrent("/") ? "page" : undefined}>首页</a>
       {
         categoryOrder.map((key) => (
           <a
             class:list={[{ active: isCurrent(`/category/${key}/`) }]}
-            href={`/category/${key}/`}
+            href={href(`/category/${key}/`)}
             aria-current={isCurrent(`/category/${key}/`) ? "page" : undefined}
           >
             {categories[key].label}
           </a>
         ))
       }
-      <a class:list={[{ active: isCurrent("/archive/") }]} href="/archive/" aria-current={isCurrent("/archive/") ? "page" : undefined}>归档</a>
-      <a class:list={[{ active: isCurrent("/about/") }]} href="/about/" aria-current={isCurrent("/about/") ? "page" : undefined}>关于</a>
+      <a class:list={[{ active: isCurrent("/archive/") }]} href={href("/archive/")} aria-current={isCurrent("/archive/") ? "page" : undefined}>归档</a>
+      <a class:list={[{ active: isCurrent("/about/") }]} href={href("/about/")} aria-current={isCurrent("/about/") ? "page" : undefined}>关于</a>
     </nav>
 
     <div class="header-actions">
@@ -53,10 +54,10 @@ const isCurrent = (href: string) => href === "/" ? path === "/" : path.startsWit
   </div>
 
   <nav id="mobile-navigation" class="mobile-nav shell" data-mobile-nav aria-label="移动端导航" hidden>
-    <a href="/" aria-current={isCurrent("/") ? "page" : undefined}>首页</a>
-    {categoryOrder.map((key) => <a href={`/category/${key}/`} aria-current={isCurrent(`/category/${key}/`) ? "page" : undefined}>{categories[key].label}</a>)}
-    <a href="/archive/" aria-current={isCurrent("/archive/") ? "page" : undefined}>归档</a>
-    <a href="/about/" aria-current={isCurrent("/about/") ? "page" : undefined}>关于</a>
+    <a href={href("/")} aria-current={isCurrent("/") ? "page" : undefined}>首页</a>
+    {categoryOrder.map((key) => <a href={href(`/category/${key}/`)} aria-current={isCurrent(`/category/${key}/`) ? "page" : undefined}>{categories[key].label}</a>)}
+    <a href={href("/archive/")} aria-current={isCurrent("/archive/") ? "page" : undefined}>归档</a>
+    <a href={href("/about/")} aria-current={isCurrent("/about/") ? "page" : undefined}>关于</a>
   </nav>
 </header>
 
@@ -146,7 +147,7 @@ const isCurrent = (href: string) => href === "/" ? path === "/" : path.startsWit
 
   async function loadSearchIndex(): Promise<SearchIndex> {
     if (!searchIndexPromise) {
-      searchIndexPromise = fetch("/search-index.json")
+      searchIndexPromise = fetch(`${import.meta.env.BASE_URL}search-index.json`)
         .then((res) => { if (!res.ok) throw new Error(String(res.status)); return res.json(); })
         .then((docs: SearchDoc[]) => buildIndex(docs))
         .catch((error) => { searchIndexPromise = null; throw error; });

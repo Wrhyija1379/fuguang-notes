@@ -5,6 +5,7 @@ import PostRow from "@/components/PostRow.astro";
 import ResponsiveImage from "@/components/ResponsiveImage.astro";
 import { categories } from "@/data/site";
 import { formatDate, getReadingMinutes, sortPosts } from "@/lib/posts";
+import { href } from "@/lib/url";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -41,7 +42,7 @@ const related = allPosts
       <ResponsiveImage src={post.data.cover} alt={post.data.coverAlt} sizes="100vw" loading="eager" fetchpriority="high" />
       <div class="article-hero-overlay"></div>
       <div class="shell article-hero-inner">
-        <a class="article-category" href={`/category/${post.data.category}/`}>{category.label} · {category.moduleTitle}</a>
+        <a class="article-category" href={href(`/category/${post.data.category}/`)}>{category.label} · {category.moduleTitle}</a>
         <h1>{post.data.title}</h1>
         <p>{post.data.summary}</p>
         <div class="article-meta">
@@ -57,7 +58,7 @@ const related = allPosts
 
     <div class="shell article-layout">
       <aside class="article-aside">
-        <a href="/">← 返回首页</a>
+        <a href={href("/")}>← 返回首页</a>
         <div>
           <span>本篇目录</span>
           {
@@ -91,7 +92,7 @@ const related = allPosts
         <span>写于 {formatDate(post.data.publishedAt)}</span>
         <p>感谢你把时间留在这里。</p>
       </div>
-      <a href={`/category/${post.data.category}/`}>继续浏览「{category.label}」<span aria-hidden="true">↗</span></a>
+      <a href={href(`/category/${post.data.category}/`)}>继续浏览「{category.label}」<span aria-hidden="true">↗</span></a>
     </footer>
   </article>
 

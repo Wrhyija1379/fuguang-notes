@@ -5,6 +5,7 @@ import PostRow from "@/components/PostRow.astro";
 import ResponsiveImage from "@/components/ResponsiveImage.astro";
 import { categories, categoryOrder, type CategoryKey } from "@/data/site";
 import { postHref, sortPosts } from "@/lib/posts";
+import { href } from "@/lib/url";
 
 export function getStaticPaths() {
   return categoryOrder.map((category) => ({ params: { category }, props: { category } }));
@@ -62,6 +63,6 @@ const lead = posts[0];
 
   <nav class="category-switcher shell" aria-label="切换内容分类">
     <span>继续浏览</span>
-    {categoryOrder.filter((item) => item !== key).map((item) => <a href={`/category/${item}/`}>{categories[item].label}<small>{categories[item].moduleTitle}</small></a>)}
+    {categoryOrder.filter((item) => item !== key).map((item) => <a href={href(`/category/${item}/`)}>{categories[item].label}<small>{categories[item].moduleTitle}</small></a>)}
   </nav>
 </BaseLayout>

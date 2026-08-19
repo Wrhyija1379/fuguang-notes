@@ -17,6 +17,12 @@ const {
   fetchpriority = "auto",
 } = Astro.props;
 
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+const resolveAsset = (path: string) => {
+  if (/^https?:\/\//.test(path) || path.startsWith("data:")) return path;
+  return `${basePath}${path.startsWith("/") ? path : `/${path}`}`;
+};
+
 const dimensions: Record<string, [number, number]> = {
   hero: [2200, 1320],
   tech: [1600, 1200],
@@ -34,14 +40,15 @@ const dimensions: Record<string, [number, number]> = {
 const match = src.match(/\/([^/]+)\.webp$/);
 const stem = match?.[1];
 const [width, height] = dimensions[stem ?? ""] ?? [1600, 1000];
+const resolvedSrc = resolveAsset(src);
 const srcset = stem
-  ? [480, 960, 1600].map((candidate) => `/images/${stem}-${candidate}.webp ${candidate}w`).join(", ")
+  ? [480, 960, 1600].map((candidate) => `${resolveAsset(`/images/${stem}-${candidate}.webp`)} ${candidate}w`).join(", ")
   : undefined;
 ---
 
 <img
   class={className}
-  src={src}
+  src={resolvedSrc}
   srcset={srcset}
   sizes={sizes}
   width={width}
