@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>浮光note</title>
+    <description>安全技术、CTF 复盘与读书笔记，记录那些值得再想一遍的问题。</description>
+    <link>https://wrhyija1379.github.io/fuguang-notes/</link>
+    <atom:link href="https://wrhyija1379.github.io/fuguang-notes/rss.xml" rel="self" type="application/rss+xml" />
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 12 Aug 2026 00:00:00 GMT</lastBuildDate>
+    <generator>Astro</generator>
+    <item>
+      <title>《为什么你攒不下钱？》：把金钱放回日常的资产负债表</title>
+      <description>一本行为理财入门书，标题常把相关性写成因果，但它的观察方法值得保留：清点、隔离、总成本与生活计划。</description>
+      <link>https://wrhyija1379.github.io/fuguang-notes/posts/why-cant-you-save-money/</link>
+      <guid isPermaLink="true">https://wrhyija1379.github.io/fuguang-notes/posts/why-cant-you-save-money/</guid>
+      <pubDate>Wed, 12 Aug 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Theologian25 · 愚者</dc:creator>
+      <category>reading</category>
+      <category>读书</category>
+      <category>理财</category>
+      <category>行为设计</category>
+      <category>书摘</category>
+    </item>
+    <item>
+      <title>一次宽字节注入的完整复盘：从字符串型判断到 UNION 绕过</title>
+      <description>LitCTF 的一道 EasySql，把判断注入类型、识别转义防御、宽字节绕过和 UNION 取数四个环节完整走了一遍。</description>
+      <link>https://wrhyija1379.github.io/fuguang-notes/posts/litctf-widebyte-sqli/</link>
+      <guid isPermaLink="true">https://wrhyija1379.github.io/fuguang-notes/posts/litctf-widebyte-sqli/</guid>
+      <pubDate>Tue, 28 Jul 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Theologian25 · 愚者</dc:creator>
+      <category>tech</category>
+      <category>SQL注入</category>
+      <category>CTF</category>
+      <category>Web安全</category>
+    </item>
+    <item>
+      <title>ArchWSL 图形化配置完整指南：在 WSL2 里跑起 KDE Plasma</title>
+      <description>从安装 ArchWSL、初始化密钥环、装桌面环境到一键启动脚本的完整记录，含常见问题排查。</description>
+      <link>https://wrhyija1379.github.io/fuguang-notes/posts/archwsl-gui-setup/</link>
+      <guid isPermaLink="true">https://wrhyija1379.github.io/fuguang-notes/posts/archwsl-gui-setup/</guid>
+      <pubDate>Mon, 20 Jul 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Theologian25 · 愚者</dc:creator>
+      <category>tech</category>
+      <category>Linux</category>
+      <category>WSL</category>
+      <category>Arch</category>
+      <category>教程</category>
+    </item>
+    <item>
+      <title>从一个慢查询开始：给个人项目做一次性能体检</title>
+      <description>一次没有复杂工具链的排查：先确认体感，再找到证据，最后只改真正拖慢页面的那一段。</description>
+      <link>https://wrhyija1379.github.io/fuguang-notes/posts/slow-query-checkup/</link>
+      <guid isPermaLink="true">https://wrhyija1379.github.io/fuguang-notes/posts/slow-query-checkup/</guid>
+      <pubDate>Sat, 18 Jul 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Theologian25 · 愚者</dc:creator>
+      <category>tech</category>
+      <category>性能</category>
+      <category>数据库</category>
+      <category>实践</category>
+    </item>
+    <item>
+      <title>重读《禅与摩托车维修艺术》：技术之外的“良质”</title>
+      <description>当技术讨论只剩指标和方法，我们是否仍能辨认一件事情被认真完成时呈现出的质地？</description>
+      <link>https://wrhyija1379.github.io/fuguang-notes/posts/zen-motorcycle-quality/</link>
+      <guid isPermaLink="true">https://wrhyija1379.github.io/fuguang-notes/posts/zen-motorcycle-quality/</guid>
+      <pubDate>Thu, 09 Jul 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Theologian25 · 愚者</dc:creator>
+      <category>reading</category>
+      <category>哲思</category>
+      <category>书摘</category>
+      <category>技术文化</category>
+    </item>
+    <item>
+      <title>《Outer Wilds》之后：为什么探索感比奖励更重要</title>
+      <description>没有等级和装备列表，一款游戏如何只用好奇心驱动玩家跨过一整个微型宇宙。</description>
+      <link>https://wrhyija1379.github.io/fuguang-notes/posts/outer-wilds-curiosity/</link>
+      <guid isPermaLink="true">https://wrhyija1379.github.io/fuguang-notes/posts/outer-wilds-curiosity/</guid>
+      <pubDate>Sat, 04 Jul 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Theologian25 · 愚者</dc:creator>
+      <category>gaming</category>
+      <category>独立游戏</category>
+      <category>叙事</category>
+      <category>体验设计</category>
+    </item>
+  </channel>
+</rss>

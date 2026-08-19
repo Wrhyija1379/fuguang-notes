@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://wrhyija1379.github.io/fuguang-notes/sitemap.xml

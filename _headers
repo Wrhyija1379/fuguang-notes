@@ -1,0 +1,21 @@
+# 静态托管缓存策略(Netlify / Cloudflare Pages 通用)
+# HTML: 不缓存,保证发布即时可见
+# 带哈希资源(_astro): 长缓存,内容变更即换文件名
+# 图片与索引: 短缓存,变更后重新构建即可生效
+
+/*
+  Cache-Control: no-cache, must-revalidate
+
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/images/*
+  Cache-Control: public, max-age=86400
+
+/search-index.json
+  Cache-Control: public, max-age=0, must-revalidate
+
+/rss.xml
+/sitemap.xml
+/robots.txt
+  Cache-Control: public, max-age=3600
