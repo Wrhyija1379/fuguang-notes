@@ -101,13 +101,15 @@ def main():
         if i % 20 == 0 or i == len(files):
             print(f"  {i}/{len(files)} uploaded")
     print("Building tree...")
+    # gh-pages 只承载构建产物(dist)。基准必须取自 gh-pages 自身，
+    # 否则以 main 源码树为 base 会把 src/、package.json 等一并混入 gh-pages。
     base_tree = None
-    main_head = ref_sha("heads/main")
-    if main_head:
-        base_tree = api("GET", f"/repos/{OWNER}/{REPO}/git/commits/{main_head}")["tree"]["sha"]
+    pages_head = ref_sha("heads/gh-pages")
+    if pages_head:
+        base_tree = api("GET", f"/repos/{OWNER}/{REPO}/git/commits/{pages_head}")["tree"]["sha"]
     tree_sha = build_tree(entries, base_tree)
     print("tree:", tree_sha)
-    parent = main_head
+    parent = pages_head
     commit_sha = create_commit(tree_sha, [parent] if parent else [], "Deploy to GitHub Pages")
     print("commit:", commit_sha)
     try:

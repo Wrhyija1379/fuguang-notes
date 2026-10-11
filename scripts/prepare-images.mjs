@@ -25,6 +25,12 @@ const jobs = [
   { source: "tech.jpg", output: "post-ctf-sqli", width: 1600, height: 1000, saturation: 0.8, brightness: 0.95, hue: 190, position: "left" },
   // archwsl-gui-setup：工作台素材，暖金调，桌面环境感
   { source: "hero.jpg", output: "post-arch-wsl", width: 1600, height: 1000, saturation: 0.75, brightness: 0.92, hue: 45, position: "attention" },
+  // vulnhub-dc9：代码素材右区，紫青调，注入与提权氛围
+  { source: "tech.jpg", output: "post-vulnhub-dc9", width: 1600, height: 1000, saturation: 0.72, brightness: 0.9, hue: 285, position: "right" },
+  // vulnhub-ionic-defibrillator：星空素材，冷蓝调，科幻靶机氛围
+  { source: "outer-wilds.jpg", output: "post-vulnhub-ionic", width: 1600, height: 1000, saturation: 0.8, brightness: 0.82, hue: 200, position: "attention" },
+  // ctfshow-web-recon：桌面素材，青绿调，信息收集氛围
+  { source: "rainy-desk.jpg", output: "post-ctfshow-recon", width: 1600, height: 1000, saturation: 0.62, brightness: 0.86, hue: 160, position: "attention" },
 ];
 
 const responsiveWidths = [480, 960, 1600];
