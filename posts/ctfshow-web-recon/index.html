@@ -1,0 +1,815 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="从 HTML 注释、响应头、robots.txt 到源码备份、.git/.svn、phpinfo 与数据库文件，把二十道信息收集题的发现路径和判断依据整理成一份可复用的检查清单。"><meta name="theme-color" content="#f2f4ef" data-theme-color><meta property="og:title" content="CTFshow Web 信息收集复盘（WEB1–WEB20） · 浮光note"><meta property="og:description" content="从 HTML 注释、响应头、robots.txt 到源码备份、.git/.svn、phpinfo 与数据库文件，把二十道信息收集题的发现路径和判断依据整理成一份可复用的检查清单。"><meta property="og:image" content="https://wrhyija1379.github.io/fuguang-notes/images/post-ctfshow-recon.webp"><meta property="og:image:alt" content="桌面上的浏览器与终端，信息收集场景"><meta property="og:type" content="article"><meta property="og:url" content="https://wrhyija1379.github.io/fuguang-notes/posts/ctfshow-web-recon/"><meta property="og:site_name" content="浮光note"><meta property="og:locale" content="zh_CN"><meta property="article:published_time" content="2026-10-11T00:00:00.000Z"><meta property="article:modified_time" content="2026-10-11T00:00:00.000Z"><meta property="article:section" content="技术"><meta property="article:tag" content="CTF"><meta property="article:tag" content="CTFshow"><meta property="article:tag" content="信息收集"><meta property="article:tag" content="Web安全"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="CTFshow Web 信息收集复盘（WEB1–WEB20） · 浮光note"><meta name="twitter:description" content="从 HTML 注释、响应头、robots.txt 到源码备份、.git/.svn、phpinfo 与数据库文件，把二十道信息收集题的发现路径和判断依据整理成一份可复用的检查清单。"><meta name="twitter:image" content="https://wrhyija1379.github.io/fuguang-notes/images/post-ctfshow-recon.webp"><meta name="twitter:image:alt" content="桌面上的浏览器与终端，信息收集场景"><link rel="canonical" href="https://wrhyija1379.github.io/fuguang-notes/posts/ctfshow-web-recon/"><link rel="alternate" type="application/rss+xml" title="浮光note RSS" href="https://wrhyija1379.github.io/fuguang-notes/rss.xml"><link rel="icon" href="https://wrhyija1379.github.io/fuguang-notes/favicon.svg" type="image/svg+xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"CTFshow Web 信息收集复盘（WEB1–WEB20）","description":"从 HTML 注释、响应头、robots.txt 到源码备份、.git/.svn、phpinfo 与数据库文件，把二十道信息收集题的发现路径和判断依据整理成一份可复用的检查清单。","image":"https://wrhyija1379.github.io/fuguang-notes/images/post-ctfshow-recon.webp","url":"https://wrhyija1379.github.io/fuguang-notes/posts/ctfshow-web-recon/","mainEntityOfPage":{"@type":"WebPage","@id":"https://wrhyija1379.github.io/fuguang-notes/posts/ctfshow-web-recon/"},"datePublished":"2026-10-11T00:00:00.000Z","dateModified":"2026-10-11T00:00:00.000Z","author":{"@type":"Person","name":"Theologian25 · 愚者"},"publisher":{"@type":"Person","name":"Theologian25 · 愚者"},"inLanguage":"zh-CN","articleSection":"技术","keywords":["CTF","CTFshow","信息收集","Web安全"]}</script><title>CTFshow Web 信息收集复盘（WEB1–WEB20） · 浮光note</title><script>
+      (() => {
+        const key = "fuguang-theme";
+        const saved = localStorage.getItem(key);
+        const mode = saved === "light" || saved === "dark" ? saved : "system";
+        if (saved && mode === "system") localStorage.removeItem(key);
+        const theme = mode === "system" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : mode === "system" ? "light" : mode;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.themeMode = mode;
+        document.documentElement.style.colorScheme = theme;
+        document.querySelector("[data-theme-color]")?.setAttribute("content", theme === "dark" ? "#101411" : "#f2f4ef");
+        matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+          if (!localStorage.getItem(key)) {
+            const next = event.matches ? "dark" : "light";
+            document.documentElement.dataset.theme = next;
+            document.documentElement.style.colorScheme = next;
+            document.documentElement.dataset.themeMode = "system";
+            document.querySelector("[data-theme-color]")?.setAttribute("content", next === "dark" ? "#101411" : "#f2f4ef");
+          }
+        });
+      })();
+    </script><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/fuguang-notes/_astro/ClientRouter.astro_astro_type_script_index_0_lang.FdJACmYA.js"></script><link rel="stylesheet" href="/fuguang-notes/_astro/BaseLayout.CKWTAeUZ.css"></head><body><a class="skip-link" href="#main-content">跳到正文</a><header class="site-header" data-header><div class="header-inner shell"><a class="brand" href="/fuguang-notes/" aria-label="浮光note首页"><span class="brand-mark" aria-hidden="true">浮</span><span class="brand-copy"><strong>浮光note</strong><small>FUGUANG NOTE</small></span></a><nav class="desktop-nav" aria-label="主导航"><a href="/fuguang-notes/">首页</a><a href="/fuguang-notes/category/tech/">技术</a><a href="/fuguang-notes/category/life/">生活</a><a href="/fuguang-notes/category/reading/">读书</a><a href="/fuguang-notes/category/gaming/">游戏</a><a href="/fuguang-notes/archive/">归档</a><a href="/fuguang-notes/about/">关于</a></nav><div class="header-actions"><button class="search-trigger" type="button" data-search-open aria-label="搜索文章"><span class="search-symbol" aria-hidden="true"></span><span class="search-word">搜索</span></button><button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="切换主题"><span class="theme-icon theme-icon-system" aria-hidden="true">◐</span><span class="theme-icon theme-icon-light" aria-hidden="true">☼</span><span class="theme-icon theme-icon-dark" aria-hidden="true">☾</span></button><span class="sr-only" role="status" aria-live="polite" data-theme-status></span><button class="icon-button menu-toggle" type="button" data-menu-toggle aria-label="打开导航" aria-controls="mobile-navigation" aria-expanded="false"><span aria-hidden="true"></span></button></div></div><nav id="mobile-navigation" class="mobile-nav shell" data-mobile-nav aria-label="移动端导航" hidden><a href="/fuguang-notes/">首页</a><a href="/fuguang-notes/category/tech/">技术</a><a href="/fuguang-notes/category/life/">生活</a><a href="/fuguang-notes/category/reading/">读书</a><a href="/fuguang-notes/category/gaming/">游戏</a><a href="/fuguang-notes/archive/">归档</a><a href="/fuguang-notes/about/">关于</a></nav></header><dialog class="search-dialog" data-search-dialog aria-labelledby="search-dialog-title" aria-describedby="search-count"><div class="search-panel"><div class="search-head"><label id="search-dialog-title" for="site-search">搜索浮光note</label><button class="icon-button" type="button" data-search-close aria-label="关闭搜索" title="关闭">×</button></div><div class="search-field-wrap"><span class="search-symbol" aria-hidden="true"></span><input id="site-search" data-search-input type="search" placeholder="输入标题、标签或关键词" autocomplete="off" aria-controls="search-results" aria-describedby="search-count"></div><p id="search-count" class="search-count" data-search-count role="status" aria-live="polite" aria-atomic="true" data-total="10">全部 10 篇文章</p><div id="search-results" class="search-results" data-search-results aria-label="文章搜索结果"><div data-search-list></div><p class="search-empty" data-search-empty hidden>没有找到匹配的文章。</p></div></div></dialog><script type="module" src="/fuguang-notes/_astro/Header.astro_astro_type_script_index_0_lang.BiXcmGwk.js"></script><main id="main-content"><article class="article-page" style="--article-accent:#3ecf8e"><header class="article-hero"><picture><img src="/fuguang-notes/images/post-ctfshow-recon.webp" srcset="/fuguang-notes/images/post-ctfshow-recon-480.webp 480w, /fuguang-notes/images/post-ctfshow-recon-960.webp 960w, /fuguang-notes/images/post-ctfshow-recon-1600.webp 1600w" sizes="100vw" width="1600" height="1000" alt="桌面上的浏览器与终端，信息收集场景" loading="eager" decoding="async" fetchpriority="high"></picture><div class="article-hero-overlay"></div><div class="shell article-hero-inner"><a class="article-category" href="/fuguang-notes/category/tech/">技术 · 编译现场</a><h1>CTFshow Web 信息收集复盘（WEB1–WEB20）</h1><p>从 HTML 注释、响应头、robots.txt 到源码备份、.git/.svn、phpinfo 与数据库文件，把二十道信息收集题的发现路径和判断依据整理成一份可复用的检查清单。</p><div class="article-meta"><time datetime="2026-10-11T00:00:00.000Z">2026/10/11</time><span>27 分钟阅读</span><span>CTF / CTFshow / 信息收集 / Web安全</span></div></div></header><div class="shell article-layout"><aside class="article-aside"><a href="/fuguang-notes/">← 返回首页</a><div><span>本篇目录</span><ol><li><a href="#1-知识地图">1. 知识地图</a></li><li><a href="#2-通用信息收集方法">2. 通用信息收集方法</a></li><li><a href="#21-推荐检查顺序">2.1 推荐检查顺序</a></li><li><a href="#22-浏览器与命令行的区别">2.2 浏览器与命令行的区别</a></li><li><a href="#23-常见泄露文件速查">2.3 常见泄露文件速查</a></li><li><a href="#web1html-注释泄露">WEB1：HTML 注释泄露</a></li><li><a href="#考点">考点</a></li><li><a href="#解题过程">解题过程</a></li><li><a href="#原理详解">原理详解</a></li><li><a href="#风险与修复">风险与修复</a></li><li><a href="#web2客户端限制不等于安全控制">WEB2：客户端限制不等于安全控制</a></li><li><a href="#考点-1">考点</a></li><li><a href="#关键代码">关键代码</a></li><li><a href="#解题过程-1">解题过程</a></li><li><a href="#原理详解-1">原理详解</a></li><li><a href="#风险与修复-1">风险与修复</a></li><li><a href="#web3http-响应头泄露">WEB3：HTTP 响应头泄露</a></li><li><a href="#考点-2">考点</a></li><li><a href="#解题过程-2">解题过程</a></li><li><a href="#原理详解-2">原理详解</a></li><li><a href="#风险与修复-2">风险与修复</a></li><li><a href="#web4robotstxt-泄露隐藏路径">WEB4：robots.txt 泄露隐藏路径</a></li><li><a href="#考点-3">考点</a></li><li><a href="#解题过程-3">解题过程</a></li><li><a href="#原理详解-3">原理详解</a></li><li><a href="#风险与修复-3">风险与修复</a></li><li><a href="#web5phps-源码泄露">WEB5：.phps 源码泄露</a></li><li><a href="#考点-4">考点</a></li><li><a href="#解题过程-4">解题过程</a></li><li><a href="#原理详解-4">原理详解</a></li><li><a href="#风险与修复-4">风险与修复</a></li><li><a href="#web6压缩包备份泄露">WEB6：压缩包备份泄露</a></li><li><a href="#考点-5">考点</a></li><li><a href="#解题过程-5">解题过程</a></li><li><a href="#原理详解-5">原理详解</a></li><li><a href="#风险与修复-5">风险与修复</a></li><li><a href="#web7git-仓库泄露">WEB7：Git 仓库泄露</a></li><li><a href="#考点-6">考点</a></li><li><a href="#解题过程-6">解题过程</a></li><li><a href="#原理详解-6">原理详解</a></li><li><a href="#风险与修复-6">风险与修复</a></li><li><a href="#web8svn-元数据泄露">WEB8：SVN 元数据泄露</a></li><li><a href="#考点-7">考点</a></li><li><a href="#解题过程-7">解题过程</a></li><li><a href="#原理详解-7">原理详解</a></li><li><a href="#风险与修复-7">风险与修复</a></li><li><a href="#web9vim-交换文件泄露">WEB9：Vim 交换文件泄露</a></li><li><a href="#考点-8">考点</a></li><li><a href="#解题过程-8">解题过程</a></li><li><a href="#原理详解-8">原理详解</a></li><li><a href="#风险与修复-8">风险与修复</a></li><li><a href="#web10set-cookie-与-url-编码">WEB10：Set-Cookie 与 URL 编码</a></li><li><a href="#考点-9">考点</a></li><li><a href="#解题过程-9">解题过程</a></li><li><a href="#原理详解-9">原理详解</a></li><li><a href="#风险与修复-9">风险与修复</a></li><li><a href="#web11dns-txt-记录信息泄露">WEB11：DNS TXT 记录信息泄露</a></li><li><a href="#考点-10">考点</a></li><li><a href="#解题过程-10">解题过程</a></li><li><a href="#原理详解-10">原理详解</a></li><li><a href="#风险与修复-10">风险与修复</a></li><li><a href="#web12robotstxt后台入口与弱口令链">WEB12：robots.txt、后台入口与弱口令链</a></li><li><a href="#考点-11">考点</a></li><li><a href="#解题过程-11">解题过程</a></li><li><a href="#原理详解-11">原理详解</a></li><li><a href="#风险与修复-11">风险与修复</a></li><li><a href="#web13技术文档与默认凭据泄露">WEB13：技术文档与默认凭据泄露</a></li><li><a href="#考点-12">考点</a></li><li><a href="#解题过程-12">解题过程</a></li><li><a href="#原理详解-12">原理详解</a></li><li><a href="#风险与修复-12">风险与修复</a></li><li><a href="#web14在线编辑器附件路径与物理路径泄露">WEB14：在线编辑器、附件路径与物理路径泄露</a></li><li><a href="#考点-13">考点</a></li><li><a href="#解题过程-13">解题过程</a></li><li><a href="#原理详解-13">原理详解</a></li><li><a href="#风险与修复-13">风险与修复</a></li><li><a href="#web15密码重置与公开信息推断">WEB15：密码重置与公开信息推断</a></li><li><a href="#考点-14">考点</a></li><li><a href="#解题过程-14">解题过程</a></li><li><a href="#原理详解-14">原理详解</a></li><li><a href="#风险与修复-14">风险与修复</a></li><li><a href="#web16php-探针与-phpinfo-泄露">WEB16：PHP 探针与 phpinfo 泄露</a></li><li><a href="#考点-15">考点</a></li><li><a href="#解题过程-15">解题过程</a></li><li><a href="#原理详解-15">原理详解</a></li><li><a href="#风险与修复-15">风险与修复</a></li><li><a href="#web17sql-备份文件泄露">WEB17：SQL 备份文件泄露</a></li><li><a href="#考点-16">考点</a></li><li><a href="#解题过程-16">解题过程</a></li><li><a href="#原理详解-16">原理详解</a></li><li><a href="#风险与修复-16">风险与修复</a></li><li><a href="#web18javascript-源码unicode-转义与路径线索">WEB18：JavaScript 源码、Unicode 转义与路径线索</a></li><li><a href="#考点-17">考点</a></li><li><a href="#解题过程-17">解题过程</a></li><li><a href="#原理详解-17">原理详解</a></li><li><a href="#风险与修复-17">风险与修复</a></li><li><a href="#web19客户端-aes-加密与请求参数重放">WEB19：客户端 AES 加密与请求参数重放</a></li><li><a href="#考点-18">考点</a></li><li><a href="#已知服务端判断">已知服务端判断</a></li><li><a href="#解题过程-18">解题过程</a></li><li><a href="#原理详解-18">原理详解</a></li><li><a href="#风险与修复-18">风险与修复</a></li><li><a href="#web20accessmdb-数据库文件泄露">WEB20：Access/MDB 数据库文件泄露</a></li><li><a href="#考点-19">考点</a></li><li><a href="#解题过程-19">解题过程</a></li><li><a href="#原理详解-19">原理详解</a></li><li><a href="#风险与修复-19">风险与修复</a></li><li><a href="#3-高频误区">3. 高频误区</a></li><li><a href="#4-信息收集检查清单">4. 信息收集检查清单</a></li></ol></div></aside><div class="article-main"><details class="mobile-toc"><summary>本篇目录 <span aria-hidden="true">＋</span></summary><ol><li><a href="#1-知识地图">1. 知识地图</a></li><li><a href="#2-通用信息收集方法">2. 通用信息收集方法</a></li><li><a href="#21-推荐检查顺序">2.1 推荐检查顺序</a></li><li><a href="#22-浏览器与命令行的区别">2.2 浏览器与命令行的区别</a></li><li><a href="#23-常见泄露文件速查">2.3 常见泄露文件速查</a></li><li><a href="#web1html-注释泄露">WEB1：HTML 注释泄露</a></li><li><a href="#考点">考点</a></li><li><a href="#解题过程">解题过程</a></li><li><a href="#原理详解">原理详解</a></li><li><a href="#风险与修复">风险与修复</a></li><li><a href="#web2客户端限制不等于安全控制">WEB2：客户端限制不等于安全控制</a></li><li><a href="#考点-1">考点</a></li><li><a href="#关键代码">关键代码</a></li><li><a href="#解题过程-1">解题过程</a></li><li><a href="#原理详解-1">原理详解</a></li><li><a href="#风险与修复-1">风险与修复</a></li><li><a href="#web3http-响应头泄露">WEB3：HTTP 响应头泄露</a></li><li><a href="#考点-2">考点</a></li><li><a href="#解题过程-2">解题过程</a></li><li><a href="#原理详解-2">原理详解</a></li><li><a href="#风险与修复-2">风险与修复</a></li><li><a href="#web4robotstxt-泄露隐藏路径">WEB4：robots.txt 泄露隐藏路径</a></li><li><a href="#考点-3">考点</a></li><li><a href="#解题过程-3">解题过程</a></li><li><a href="#原理详解-3">原理详解</a></li><li><a href="#风险与修复-3">风险与修复</a></li><li><a href="#web5phps-源码泄露">WEB5：.phps 源码泄露</a></li><li><a href="#考点-4">考点</a></li><li><a href="#解题过程-4">解题过程</a></li><li><a href="#原理详解-4">原理详解</a></li><li><a href="#风险与修复-4">风险与修复</a></li><li><a href="#web6压缩包备份泄露">WEB6：压缩包备份泄露</a></li><li><a href="#考点-5">考点</a></li><li><a href="#解题过程-5">解题过程</a></li><li><a href="#原理详解-5">原理详解</a></li><li><a href="#风险与修复-5">风险与修复</a></li><li><a href="#web7git-仓库泄露">WEB7：Git 仓库泄露</a></li><li><a href="#考点-6">考点</a></li><li><a href="#解题过程-6">解题过程</a></li><li><a href="#原理详解-6">原理详解</a></li><li><a href="#风险与修复-6">风险与修复</a></li><li><a href="#web8svn-元数据泄露">WEB8：SVN 元数据泄露</a></li><li><a href="#考点-7">考点</a></li><li><a href="#解题过程-7">解题过程</a></li><li><a href="#原理详解-7">原理详解</a></li><li><a href="#风险与修复-7">风险与修复</a></li><li><a href="#web9vim-交换文件泄露">WEB9：Vim 交换文件泄露</a></li><li><a href="#考点-8">考点</a></li><li><a href="#解题过程-8">解题过程</a></li><li><a href="#原理详解-8">原理详解</a></li><li><a href="#风险与修复-8">风险与修复</a></li><li><a href="#web10set-cookie-与-url-编码">WEB10：Set-Cookie 与 URL 编码</a></li><li><a href="#考点-9">考点</a></li><li><a href="#解题过程-9">解题过程</a></li><li><a href="#原理详解-9">原理详解</a></li><li><a href="#风险与修复-9">风险与修复</a></li><li><a href="#web11dns-txt-记录信息泄露">WEB11：DNS TXT 记录信息泄露</a></li><li><a href="#考点-10">考点</a></li><li><a href="#解题过程-10">解题过程</a></li><li><a href="#原理详解-10">原理详解</a></li><li><a href="#风险与修复-10">风险与修复</a></li><li><a href="#web12robotstxt后台入口与弱口令链">WEB12：robots.txt、后台入口与弱口令链</a></li><li><a href="#考点-11">考点</a></li><li><a href="#解题过程-11">解题过程</a></li><li><a href="#原理详解-11">原理详解</a></li><li><a href="#风险与修复-11">风险与修复</a></li><li><a href="#web13技术文档与默认凭据泄露">WEB13：技术文档与默认凭据泄露</a></li><li><a href="#考点-12">考点</a></li><li><a href="#解题过程-12">解题过程</a></li><li><a href="#原理详解-12">原理详解</a></li><li><a href="#风险与修复-12">风险与修复</a></li><li><a href="#web14在线编辑器附件路径与物理路径泄露">WEB14：在线编辑器、附件路径与物理路径泄露</a></li><li><a href="#考点-13">考点</a></li><li><a href="#解题过程-13">解题过程</a></li><li><a href="#原理详解-13">原理详解</a></li><li><a href="#风险与修复-13">风险与修复</a></li><li><a href="#web15密码重置与公开信息推断">WEB15：密码重置与公开信息推断</a></li><li><a href="#考点-14">考点</a></li><li><a href="#解题过程-14">解题过程</a></li><li><a href="#原理详解-14">原理详解</a></li><li><a href="#风险与修复-14">风险与修复</a></li><li><a href="#web16php-探针与-phpinfo-泄露">WEB16：PHP 探针与 phpinfo 泄露</a></li><li><a href="#考点-15">考点</a></li><li><a href="#解题过程-15">解题过程</a></li><li><a href="#原理详解-15">原理详解</a></li><li><a href="#风险与修复-15">风险与修复</a></li><li><a href="#web17sql-备份文件泄露">WEB17：SQL 备份文件泄露</a></li><li><a href="#考点-16">考点</a></li><li><a href="#解题过程-16">解题过程</a></li><li><a href="#原理详解-16">原理详解</a></li><li><a href="#风险与修复-16">风险与修复</a></li><li><a href="#web18javascript-源码unicode-转义与路径线索">WEB18：JavaScript 源码、Unicode 转义与路径线索</a></li><li><a href="#考点-17">考点</a></li><li><a href="#解题过程-17">解题过程</a></li><li><a href="#原理详解-17">原理详解</a></li><li><a href="#风险与修复-17">风险与修复</a></li><li><a href="#web19客户端-aes-加密与请求参数重放">WEB19：客户端 AES 加密与请求参数重放</a></li><li><a href="#考点-18">考点</a></li><li><a href="#已知服务端判断">已知服务端判断</a></li><li><a href="#解题过程-18">解题过程</a></li><li><a href="#原理详解-18">原理详解</a></li><li><a href="#风险与修复-18">风险与修复</a></li><li><a href="#web20accessmdb-数据库文件泄露">WEB20：Access/MDB 数据库文件泄露</a></li><li><a href="#考点-19">考点</a></li><li><a href="#解题过程-19">解题过程</a></li><li><a href="#原理详解-19">原理详解</a></li><li><a href="#风险与修复-19">风险与修复</a></li><li><a href="#3-高频误区">3. 高频误区</a></li><li><a href="#4-信息收集检查清单">4. 信息收集检查清单</a></li></ol></details><div class="article-prose"><blockquote>
+<p>本笔记用于 CTFshow 授权靶场复习。目录枚举、版本库恢复、备份文件探测等操作只能用于自己拥有或明确授权的目标。</p>
+<p>题目实例重置后，UUID 形式的 Flag 可能变化。下面保留的是本次练习时取得的结果，复习时应重点掌握发现路径和判断依据。</p>
+</blockquote>
+<h2 id="1-知识地图">1. 知识地图</h2>
+<p>这 20 道题并不要求复杂漏洞利用，核心是建立一个完整的信息收集习惯：浏览器展示出来的页面只是响应的一部分，源码、响应头、Cookie、DNS、静态资源、约定文件、备份文件和开发残留都可能包含线索。</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>对应题目</th>
+<th>核心知识点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前端源码与注释</td>
+<td>WEB1、WEB2</td>
+<td>HTML 注释、查看源代码、客户端 JavaScript 限制</td>
+</tr>
+<tr>
+<td>HTTP 元数据</td>
+<td>WEB3、WEB10</td>
+<td>响应头、自定义 Header、Set-Cookie、URL 编码</td>
+</tr>
+<tr>
+<td>约定文件与隐藏入口</td>
+<td>WEB4、WEB12</td>
+<td>robots.txt 只能约束爬虫，不能实现访问控制</td>
+</tr>
+<tr>
+<td>源码、备份与版本控制泄露</td>
+<td>WEB5-WEB9、WEB17、WEB20</td>
+<td>.phps、压缩包、.git、.svn、Vim 交换文件、SQL/MDB 数据库</td>
+</tr>
+<tr>
+<td>DNS、文档与公开信息</td>
+<td>WEB11、WEB13、WEB15</td>
+<td>DNS TXT、技术文档、默认口令、密码重置与 OSINT</td>
+</tr>
+<tr>
+<td>开发组件和静态资源</td>
+<td>WEB14、WEB16、WEB18、WEB19</td>
+<td>在线编辑器、PHP 探针、JavaScript、Unicode、客户端加密</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-通用信息收集方法">2. 通用信息收集方法</h2>
+<h3 id="21-推荐检查顺序">2.1 推荐检查顺序</h3>
+<ol>
+<li>查看页面正常渲染结果，记录标题、文字、链接、表单、图片和异常提示。</li>
+<li>查看原始 HTML 源码，搜索 <code>flag</code>、<code>ctfshow</code>、<code>admin</code>、<code>password</code>、<code>secret</code>、<code>debug</code> 等关键词。</li>
+<li>打开开发者工具的 Network 面板并刷新，检查所有请求，而不只检查主文档。</li>
+<li>分别检查状态码、响应头、响应体、重定向、Cookie 和资源真实路径。</li>
+<li>查看 <code>robots.txt</code>、<code>sitemap.xml</code>、JavaScript、Source Map、接口文档和常见测试文件。</li>
+<li>根据题目提示推测备份、版本控制、编辑器残留和数据库文件名，再进行低速、定向枚举。</li>
+<li>检查 DNS 记录以及页面公开的邮箱、电话、公司名称、城市等辅助信息。</li>
+<li>下载到本地的源码、压缩包、SQL 或数据库文件要再次全文搜索，不能只看文件名。</li>
+</ol>
+<h3 id="22-浏览器与命令行的区别">2.2 浏览器与命令行的区别</h3>
+<ul>
+<li>Elements 面板展示的是浏览器解析并可能被 JavaScript 修改后的 DOM。</li>
+<li>“查看网页源代码”展示服务器最初返回的 HTML，更适合寻找注释和原始脚本。</li>
+<li>Network 面板展示每一个 HTTP 请求，可看到响应头、Cookie、重定向和静态资源。</li>
+<li>命令行工具不执行页面 JavaScript，因此可绕过“禁用右键、禁用 F12”一类纯前端限制。</li>
+</ul>
+<p>常用命令：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#6A737D"># 同时查看响应头和响应体</span></span>
+<span class="line"><span style="color:#B392F0">curl</span><span style="color:#79B8FF"> -i</span><span style="color:#9ECBFF"> https://target.example/</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># 只请求响应头；并非所有服务器都正确支持 HEAD</span></span>
+<span class="line"><span style="color:#B392F0">curl</span><span style="color:#79B8FF"> -I</span><span style="color:#9ECBFF"> https://target.example/</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># 跟随 301/302 重定向</span></span>
+<span class="line"><span style="color:#B392F0">curl</span><span style="color:#79B8FF"> -iL</span><span style="color:#9ECBFF"> https://target.example/</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D"># 查看常见约定文件</span></span>
+<span class="line"><span style="color:#B392F0">curl</span><span style="color:#79B8FF"> -sS</span><span style="color:#9ECBFF"> https://target.example/robots.txt</span></span>
+<span class="line"><span style="color:#B392F0">curl</span><span style="color:#79B8FF"> -sS</span><span style="color:#9ECBFF"> https://target.example/sitemap.xml</span></span></code></pre>
+<p>Windows PowerShell 中建议显式使用 <code>curl.exe</code>，避免旧版 PowerShell 将 <code>curl</code> 解析为 <code>Invoke-WebRequest</code> 的别名。</p>
+<h3 id="23-常见泄露文件速查">2.3 常见泄露文件速查</h3>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>常见路径或后缀</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PHP 源码映射</td>
+<td><code>index.phps</code></td>
+</tr>
+<tr>
+<td>压缩包</td>
+<td><code>www.zip</code>、<code>web.zip</code>、<code>backup.zip</code>、<code>site.tar.gz</code></td>
+</tr>
+<tr>
+<td>临时/备份文件</td>
+<td><code>.bak</code>、<code>.old</code>、<code>.orig</code>、<code>~</code>、<code>.swp</code>、<code>.swo</code>、<code>.swn</code></td>
+</tr>
+<tr>
+<td>Git</td>
+<td><code>.git/HEAD</code>、<code>.git/config</code>、<code>.git/index</code></td>
+</tr>
+<tr>
+<td>SVN</td>
+<td><code>.svn/entries</code>、<code>.svn/wc.db</code>、<code>.svn/pristine/</code></td>
+</tr>
+<tr>
+<td>数据库备份</td>
+<td><code>backup.sql</code>、<code>db.sql</code>、<code>dump.sql</code>、<code>db.mdb</code></td>
+</tr>
+<tr>
+<td>调试/探针</td>
+<td><code>phpinfo.php</code>、<code>info.php</code>、<code>test.php</code>、<code>tz.php</code></td>
+</tr>
+<tr>
+<td>接口文档</td>
+<td><code>swagger.json</code>、<code>openapi.json</code>、<code>api-docs</code>、<code>document</code></td>
+</tr>
+</tbody>
+</table>
+<p>枚举时要比较状态码、响应长度、响应类型和页面内容。某些站点会对不存在的路径统一返回 HTTP 200，因此“200”不一定代表文件真实存在。</p>
+<hr>
+<h2 id="web1html-注释泄露">WEB1：HTML 注释泄露</h2>
+<h3 id="考点">考点</h3>
+<p>HTML 注释不会显示在页面正文中，但会完整发送给浏览器。只要秘密进入前端响应，用户就能够读取。</p>
+<h3 id="解题过程">解题过程</h3>
+<ol>
+<li>页面上没有直接显示 Flag。</li>
+<li>使用 <code>Ctrl+U</code> 或右键“查看网页源代码”。</li>
+<li>搜索 <code>ctfshow</code> 或 <code>&lt;!--</code>，在注释中发现：</li>
+</ol>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="html"><code><span class="line"><span style="color:#6A737D">&#x3C;!-- ctfshow{8efb4d75-5be2-4480-9d2a-f39049379b2b} --></span></span></code></pre>
+<h3 id="原理详解">原理详解</h3>
+<p>HTML 注释的语法是 <code>&lt;!-- ... --&gt;</code>。浏览器在正常渲染时不显示注释内容，但注释仍属于 HTTP 响应体。隐藏显示不等于保密，CSS 的 <code>display:none</code>、隐藏表单、不可见元素同样如此。</p>
+<h3 id="风险与修复">风险与修复</h3>
+<ul>
+<li>不要把密码、令牌、内部地址或调试信息写入 HTML/JS/CSS 注释。</li>
+<li>构建生产版本时移除调试代码和敏感注释。</li>
+<li>已经发送到客户端的秘密应视为已经泄露，并及时轮换。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{8efb4d75-5be2-4480-9d2a-f39049379b2b}</code></p>
+<hr>
+<h2 id="web2客户端限制不等于安全控制">WEB2：客户端限制不等于安全控制</h2>
+<h3 id="考点-1">考点</h3>
+<p>页面通过 JavaScript 禁止右键、文本选择或 F12，但这些限制只影响当前页面的交互，不能阻止用户取得服务器已经返回的源码。</p>
+<h3 id="关键代码">关键代码</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#E1E4E8">window.</span><span style="color:#B392F0">oncontextmenu</span><span style="color:#F97583"> =</span><span style="color:#F97583"> function</span><span style="color:#E1E4E8"> () { </span><span style="color:#F97583">return</span><span style="color:#79B8FF"> false</span><span style="color:#E1E4E8">; };</span></span>
+<span class="line"><span style="color:#E1E4E8">window.</span><span style="color:#B392F0">onselectstart</span><span style="color:#F97583"> =</span><span style="color:#F97583"> function</span><span style="color:#E1E4E8"> () { </span><span style="color:#F97583">return</span><span style="color:#79B8FF"> false</span><span style="color:#E1E4E8">; };</span></span>
+<span class="line"><span style="color:#E1E4E8">window.</span><span style="color:#B392F0">onkeydown</span><span style="color:#F97583"> =</span><span style="color:#F97583"> function</span><span style="color:#E1E4E8"> () {</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8"> (event.keyCode </span><span style="color:#F97583">==</span><span style="color:#79B8FF"> 123</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#E1E4E8">    event.keyCode </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    event.returnValue </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> false</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">};</span></span></code></pre>
+<h3 id="解题过程-1">解题过程</h3>
+<p>可使用任意一种方式读取源码：</p>
+<ul>
+<li><code>Ctrl+U</code></li>
+<li>在地址前添加 <code>view-source:</code></li>
+<li>先打开开发者工具，再访问页面</li>
+<li>禁用 JavaScript</li>
+<li>使用 <code>curl.exe</code>、Burp Suite 等直接读取 HTTP 响应</li>
+</ul>
+<p>例如：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>view-source:https://题目地址/</span></span></code></pre>
+<p>源码注释中包含 Flag。</p>
+<h3 id="原理详解-1">原理详解</h3>
+<p>JavaScript 运行在用户控制的浏览器中。用户可以修改脚本、跳过脚本、禁用脚本，也可以完全不使用浏览器。因此，前端代码只能改善交互，不能作为保密、鉴权或权限控制的边界。</p>
+<p><code>view-source:</code> 是浏览器提供的查看原始文档方式，不是服务器端安全协议。即使浏览器不支持它，也可以直接读取 HTTP 响应。</p>
+<h3 id="风险与修复-1">风险与修复</h3>
+<ul>
+<li>鉴权和权限判断必须在服务端完成。</li>
+<li>不要依赖禁用右键、F12、复制或选中文本保护内容。</li>
+<li>不要在前端嵌入数据库密码、私钥或可直接调用高权限接口的固定令牌。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{49255d5a-c2b0-4265-a912-348af0d62671}</code></p>
+<hr>
+<h2 id="web3http-响应头泄露">WEB3：HTTP 响应头泄露</h2>
+<h3 id="考点-2">考点</h3>
+<p>HTTP 响应由状态行、响应头和响应体组成。敏感信息不一定出现在页面正文，也可能藏在自定义响应头中。</p>
+<h3 id="解题过程-2">解题过程</h3>
+<ol>
+<li>打开开发者工具的 Network 面板并刷新页面。</li>
+<li>逐个查看主文档、图片、JavaScript、<code>favicon.ico</code> 等请求。</li>
+<li>在 <code>favicon.ico</code> 请求的响应头中发现：</li>
+</ol>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="http"><code><span class="line"><span style="color:#F97583">HTTP</span><span style="color:#E1E4E8">/</span><span style="color:#79B8FF">1.1</span><span style="color:#79B8FF"> 200</span><span style="color:#9ECBFF"> OK</span></span>
+<span class="line"><span style="color:#85E89D">Flag</span><span style="color:#F97583">:</span><span style="color:#9ECBFF"> ctfshow{3125d4c0-23af-45ae-b830-efb7ba3890e4}</span></span>
+<span class="line"><span style="color:#85E89D">Server</span><span style="color:#F97583">:</span><span style="color:#9ECBFF"> nginx/1.20.1</span></span>
+<span class="line"><span style="color:#85E89D">X-Powered-By</span><span style="color:#F97583">:</span><span style="color:#9ECBFF"> PHP/7.3.11</span></span></code></pre>
+<p>也可以使用：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">curl</span><span style="color:#79B8FF"> -i</span><span style="color:#9ECBFF"> https://题目地址/favicon.ico</span></span></code></pre>
+<h3 id="原理详解-2">原理详解</h3>
+<ul>
+<li>HTTP Header 名称不区分大小写，<code>Flag</code>、<code>flag</code> 在协议层面等价。</li>
+<li><code>Server</code>、<code>X-Powered-By</code> 可暴露中间件和语言版本。</li>
+<li>自定义 Header 同样会发送到客户端，不能用来秘密保存 Flag。</li>
+<li><code>Access-Control-Expose-Headers</code> 只决定跨域 JavaScript 能读取哪些响应头，不影响用户在开发者工具或抓包工具中查看响应。</li>
+</ul>
+<p>本题还提醒我们：浏览器会自动请求 favicon 等资源，信息可能位于任何一次响应中。</p>
+<h3 id="风险与修复-2">风险与修复</h3>
+<ul>
+<li>删除调试 Header 和内部追踪信息。</li>
+<li>尽量隐藏不必要的精确版本号，但不能把“隐藏版本”当成漏洞修复。</li>
+<li>对响应进行统一检查，避免网关、应用和调试中间件把秘密写入 Header。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{3125d4c0-23af-45ae-b830-efb7ba3890e4}</code></p>
+<hr>
+<h2 id="web4robotstxt-泄露隐藏路径">WEB4：robots.txt 泄露隐藏路径</h2>
+<h3 id="考点-3">考点</h3>
+<p><code>robots.txt</code> 是给搜索引擎爬虫看的公开规则文件，不是访问控制文件。</p>
+<h3 id="解题过程-3">解题过程</h3>
+<p>访问：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/robots.txt</span></span></code></pre>
+<p>得到：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>User-agent: *</span></span>
+<span class="line"><span>Disallow: /flagishere.txt</span></span></code></pre>
+<p>随后直接访问 <code>/flagishere.txt</code> 取得 Flag。</p>
+<h3 id="原理详解-3">原理详解</h3>
+<ul>
+<li><code>User-agent: *</code> 表示规则适用于所有遵守约定的爬虫。</li>
+<li><code>Disallow</code> 表示希望爬虫不要抓取该路径。</li>
+<li>文件本身是公开的，任何用户都能读取。</li>
+<li>恶意客户端不会主动遵守该规则，因此它不能代替登录、鉴权、IP 限制或文件权限。</li>
+</ul>
+<p>把后台路径写进 <code>robots.txt</code>，往往等于公开了一份“值得检查的路径清单”。</p>
+<h3 id="风险与修复-3">风险与修复</h3>
+<ul>
+<li>敏感路径必须实施服务端认证与授权。</li>
+<li>不要在 <code>robots.txt</code> 中写入无需公开的管理路径、备份文件或密钥文件。</li>
+<li>对真正不需要公开的资源，应从 Web 根目录移除。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{519fdba6-a8a8-4e2d-b1de-49f9de46ad6b}</code></p>
+<hr>
+<h2 id="web5phps-源码泄露">WEB5：.phps 源码泄露</h2>
+<h3 id="考点-4">考点</h3>
+<p>某些 PHP/Apache 环境会把 <code>.phps</code> 映射为“显示 PHP 源码”，导致同名源码副本被公开。</p>
+<h3 id="解题过程-4">解题过程</h3>
+<p>尝试访问：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/index.phps</span></span></code></pre>
+<p>返回的源码注释中包含：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="php"><code><span class="line"><span style="color:#6A737D">// ctfshow{c49a2925-ba57-4b5b-8b95-4697a28ffc8b}</span></span>
+<span class="line"><span style="color:#79B8FF">echo</span><span style="color:#9ECBFF"> "web5:where is flag ?"</span><span style="color:#E1E4E8">;</span></span></code></pre>
+<h3 id="原理详解-4">原理详解</h3>
+<p><code>.php</code> 文件通常交给 PHP 解释器执行，客户端只能看到执行结果。<code>.phps</code> 并不是 PHP 的强制标准行为，而是服务器可选的 MIME/Handler 配置；某些环境会对其进行语法高亮并返回源码。</p>
+<p>因此，<code>index.phps</code> 只是一种值得检查的源码泄露变体，不代表所有 PHP 站点都支持。</p>
+<h3 id="风险与修复-4">风险与修复</h3>
+<ul>
+<li>生产服务器不要配置不必要的 <code>.phps</code> 源码展示映射。</li>
+<li>不要把源码副本、示例文件或备份文件放在 Web 根目录。</li>
+<li>源码一旦泄露，应检查并轮换数据库密码、API Key、Cookie 密钥等凭据。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{c49a2925-ba57-4b5b-8b95-4697a28ffc8b}</code></p>
+<hr>
+<h2 id="web6压缩包备份泄露">WEB6：压缩包备份泄露</h2>
+<h3 id="考点-5">考点</h3>
+<p>开发者把源码压缩后留在网站目录中，Web 服务器会把压缩包当作静态文件直接提供下载。</p>
+<h3 id="解题过程-5">解题过程</h3>
+<p>根据提示推测常见源码包：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/www.zip</span></span></code></pre>
+<p>若没有明确文件名，可在授权靶场中进行低速、定向枚举：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">dirsearch</span><span style="color:#79B8FF"> -u</span><span style="color:#9ECBFF"> https://题目地址/</span><span style="color:#79B8FF"> -e</span><span style="color:#9ECBFF"> zip,rar,7z,tar,gz,bak</span><span style="color:#79B8FF"> -t</span><span style="color:#79B8FF"> 10</span></span></code></pre>
+<p>下载并解压 <code>www.zip</code> 后，源码提示：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="php"><code><span class="line"><span style="color:#6A737D">// flag in fl000g.txt</span></span></code></pre>
+<p>继续读取对应文件即可。</p>
+<h3 id="原理详解-5">原理详解</h3>
+<p>PHP 源码通过 <code>.php</code> 请求时会被解释执行，但 ZIP、RAR、SQL 等文件通常由 Web 服务器直接返回。备份包可能同时包含：</p>
+<ul>
+<li>完整业务源码</li>
+<li>数据库配置和账号密码</li>
+<li>Git/SVN 元数据</li>
+<li>历史代码和已删除功能</li>
+<li>内部路径、接口和密钥</li>
+</ul>
+<h3 id="风险与修复-5">风险与修复</h3>
+<ul>
+<li>备份文件应放在 Web 根目录之外。</li>
+<li>部署流程采用文件白名单，只发布运行所需文件。</li>
+<li>Web 服务器可额外拒绝访问备份后缀，但这只是纵深防御。</li>
+<li>对泄露源码进行凭据排查和密钥轮换。</li>
+</ul>
+<p><strong>Flag：</strong> <code>flag{flag_here}</code></p>
+<hr>
+<h2 id="web7git-仓库泄露">WEB7：Git 仓库泄露</h2>
+<h3 id="考点-6">考点</h3>
+<p>把项目目录连同 <code>.git</code> 部署到生产环境，会暴露当前源码、提交历史、分支信息，甚至已经从当前版本删除的秘密。</p>
+<h3 id="解题过程-6">解题过程</h3>
+<p>首先检查：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/.git/HEAD</span></span>
+<span class="line"><span>/.git/config</span></span>
+<span class="line"><span>/.git/index</span></span></code></pre>
+<p>本题通过目录扫描发现 <code>.git</code>，访问相关内容后取得 Flag。</p>
+<p>在真实授权测试中，即使目录列表被关闭，单个 Git 元数据文件仍可能可访问。若核心对象完整，可使用 GitHack、git-dumper 一类工具恢复仓库，再检查：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">git</span><span style="color:#9ECBFF"> log</span><span style="color:#79B8FF"> --all</span><span style="color:#79B8FF"> --oneline</span></span>
+<span class="line"><span style="color:#B392F0">git</span><span style="color:#9ECBFF"> show</span><span style="color:#F97583"> &#x3C;</span><span style="color:#9ECBFF">commi</span><span style="color:#E1E4E8">t</span><span style="color:#F97583">></span></span>
+<span class="line"><span style="color:#B392F0">git</span><span style="color:#9ECBFF"> branch</span><span style="color:#79B8FF"> -a</span></span>
+<span class="line"><span style="color:#B392F0">git</span><span style="color:#9ECBFF"> fsck</span><span style="color:#79B8FF"> --full</span></span></code></pre>
+<h3 id="原理详解-6">原理详解</h3>
+<p>Git 使用对象数据库保存 blob、tree、commit 等对象。删除工作区中的密码并提交，并不一定会立刻从历史对象中删除密码。因此，恢复仓库后必须检查全部分支、标签和历史提交，而不只是当前文件。</p>
+<h3 id="风险与修复-6">风险与修复</h3>
+<ul>
+<li>构建产物中排除 <code>.git</code>。</li>
+<li>Web 服务器拒绝访问点目录只能作为补充措施。</li>
+<li>若仓库曾公开，必须轮换历史中出现过的所有凭据。</li>
+<li>使用专门的 Secret Scanner 检查当前代码和提交历史。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{47177cf5-9277-47bc-95e5-c02cece436e1}</code></p>
+<hr>
+<h2 id="web8svn-元数据泄露">WEB8：SVN 元数据泄露</h2>
+<h3 id="考点-7">考点</h3>
+<p>SVN 工作副本中的 <code>.svn</code> 目录也可能暴露文件名、历史内容和源码副本。</p>
+<h3 id="解题过程-7">解题过程</h3>
+<p>目录扫描发现：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/.svn/</span></span></code></pre>
+<p>随后读取 SVN 元数据并取得 Flag。</p>
+<p>常见检查点：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/.svn/entries</span></span>
+<span class="line"><span>/.svn/wc.db</span></span>
+<span class="line"><span>/.svn/pristine/</span></span></code></pre>
+<h3 id="原理详解-7">原理详解</h3>
+<ul>
+<li>较老的 SVN 工作副本会在多个目录中保存 <code>.svn/entries</code>。</li>
+<li>SVN 1.7 之后主要使用根目录下的 <code>.svn/wc.db</code>，它是 SQLite 数据库。</li>
+<li><code>wc.db</code> 的 <code>NODES</code> 等表可暴露项目相对路径和对象校验值。</li>
+<li><code>.svn/pristine</code> 中可能保存文件的原始副本。</li>
+</ul>
+<h3 id="风险与修复-7">风险与修复</h3>
+<ul>
+<li>生产部署只复制构建产物，不复制整个开发工作区。</li>
+<li>明确排除 <code>.svn</code>、<code>.git</code>、<code>.hg</code> 等版本控制目录。</li>
+<li>泄露后检查历史源码中的密码、令牌和内部接口。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{fad93671-11c1-43a6-a2c3-c5b28507efd2}</code></p>
+<hr>
+<h2 id="web9vim-交换文件泄露">WEB9：Vim 交换文件泄露</h2>
+<h3 id="考点-8">考点</h3>
+<p>Vim 编辑文件时会创建交换文件。若编辑器异常退出，交换文件可能残留在 Web 目录并被直接下载。</p>
+<h3 id="解题过程-8">解题过程</h3>
+<p>题目提示开发者在生产环境使用 Vim 且发生异常。尝试：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/index.php.swp</span></span>
+<span class="line"><span>/.index.php.swp</span></span>
+<span class="line"><span>/.index.php.swo</span></span>
+<span class="line"><span>/.index.php.swn</span></span></code></pre>
+<p>本题通过 <code>index.php.swp</code> 取得了包含 Flag 的残留内容。</p>
+<p>下载后可尝试使用 Vim 恢复：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">vim</span><span style="color:#79B8FF"> -r</span><span style="color:#9ECBFF"> index.php</span></span></code></pre>
+<p>也可以先使用 <code>strings</code> 搜索明显的文本线索。</p>
+<h3 id="原理详解-8">原理详解</h3>
+<p>Vim 常见残留文件并不完全相同：</p>
+<ul>
+<li>交换文件：通常是 <code>.index.php.swp</code>，冲突时依次使用 <code>.swo</code>、<code>.swn</code>。</li>
+<li>备份文件：常见为 <code>index.php~</code>。</li>
+<li>持久化撤销文件：可能是 <code>.index.php.un~</code>。</li>
+</ul>
+<p>题目或服务器配置可能使用不同命名，所以应根据原文件名尝试多个合理变体。</p>
+<h3 id="风险与修复-8">风险与修复</h3>
+<ul>
+<li>不要直接在生产 Web 根目录中编辑代码。</li>
+<li>部署完成后清理临时文件、交换文件和编辑器备份。</li>
+<li>Web 服务器可拒绝访问隐藏文件和临时后缀。</li>
+<li>使用 CI/CD 发布不可变构建产物，减少人工在线修改。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{dabc17af-fdbf-45d7-8628-91a1d52ec017}</code></p>
+<hr>
+<h2 id="web10set-cookie-与-url-编码">WEB10：Set-Cookie 与 URL 编码</h2>
+<h3 id="考点-9">考点</h3>
+<p>服务器可能通过响应头下发 Cookie。Cookie 值还可能使用百分号编码，需要解码后才能阅读。</p>
+<h3 id="解题过程-9">解题过程</h3>
+<p>在 Network 面板的 Response Headers 中发现：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="http"><code><span class="line"><span style="color:#85E89D">Set-Cookie</span><span style="color:#F97583">:</span><span style="color:#9ECBFF"> flag=ctfshow%7B0142746d-e302-4cba-9f36-4753aebdd429%7D</span></span></code></pre>
+<p>其中：</p>
+<ul>
+<li><code>%7B</code> 是 <code>{</code></li>
+<li><code>%7D</code> 是 <code>}</code></li>
+</ul>
+<p>浏览器控制台可直接解码：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#B392F0">decodeURIComponent</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"ctfshow%7B0142746d-e302-4cba-9f36-4753aebdd429%7D"</span><span style="color:#E1E4E8">)</span></span></code></pre>
+<h3 id="原理详解-9">原理详解</h3>
+<ul>
+<li><code>Set-Cookie</code>：服务器在响应中要求浏览器保存 Cookie。</li>
+<li><code>Cookie</code>：浏览器在后续请求中把符合域、路径等条件的 Cookie 发回服务器。</li>
+<li>百分号编码只是编码，不是加密，任何人都能还原。</li>
+<li><code>HttpOnly</code> 可阻止页面 JavaScript 直接读取 Cookie，但用户仍可在浏览器存储或网络工具中看到自己的 Cookie。</li>
+<li><code>Secure</code> 表示只通过 HTTPS 发送；<code>SameSite</code> 主要缓解跨站请求风险。</li>
+</ul>
+<h3 id="风险与修复-9">风险与修复</h3>
+<ul>
+<li>不要把 Flag、密码或其他秘密直接作为客户端 Cookie 值。</li>
+<li>会话 Cookie 应使用高熵、不可预测的会话标识，并在服务端保存真实状态。</li>
+<li>根据场景设置 <code>Secure</code>、<code>HttpOnly</code> 和合适的 <code>SameSite</code>。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{0142746d-e302-4cba-9f36-4753aebdd429}</code></p>
+<hr>
+<h2 id="web11dns-txt-记录信息泄露">WEB11：DNS TXT 记录信息泄露</h2>
+<h3 id="考点-10">考点</h3>
+<p>DNS 不只包含 IP 地址。TXT 记录是公开可查询的数据，常用于域名验证、邮件安全和备注信息。</p>
+<h3 id="解题过程-10">解题过程</h3>
+<p>根据提示查询 <code>flag.ctfshow.com</code> 的 TXT 记录：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">nslookup</span><span style="color:#79B8FF"> -type=TXT</span><span style="color:#9ECBFF"> flag.ctfshow.com</span></span>
+<span class="line"><span style="color:#B392F0">dig</span><span style="color:#9ECBFF"> TXT</span><span style="color:#9ECBFF"> flag.ctfshow.com</span></span></code></pre>
+<p>PowerShell：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="powershell"><code><span class="line"><span style="color:#79B8FF">Resolve-DnsName</span><span style="color:#F97583"> -</span><span style="color:#E1E4E8">Name </span><span style="color:#79B8FF">flag.ctfshow.com</span><span style="color:#F97583"> -</span><span style="color:#E1E4E8">Type TXT</span></span></code></pre>
+<p>得到：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>flag{just_seesee}</span></span></code></pre>
+<h3 id="原理详解-10">原理详解</h3>
+<p>常见 DNS 记录包括：</p>
+<ul>
+<li><code>A</code>：域名到 IPv4 地址</li>
+<li><code>AAAA</code>：域名到 IPv6 地址</li>
+<li><code>CNAME</code>：别名指向另一个域名</li>
+<li><code>MX</code>：邮件服务器</li>
+<li><code>TXT</code>：任意文本，常用于 SPF、DKIM、DMARC 和第三方服务验证</li>
+</ul>
+<p>TXT 记录可能被拆成多个引号包裹的字符串，解析时需要按顺序拼接。由于 DNS 数据本来就是公开查询的，不应在其中放置真正的秘密。</p>
+<h3 id="风险与修复-10">风险与修复</h3>
+<ul>
+<li>定期清理过期的域名验证 TXT 记录。</li>
+<li>不要在 DNS 中保存内部凭据、调试口令或敏感备注。</li>
+<li>信息收集时同时检查根域名和有意义的子域名，如 <code>flag</code>、<code>dev</code>、<code>test</code>。</li>
+</ul>
+<p><strong>Flag：</strong> <code>flag{just_seesee}</code></p>
+<hr>
+<h2 id="web12robotstxt后台入口与弱口令链">WEB12：robots.txt、后台入口与弱口令链</h2>
+<h3 id="考点-11">考点</h3>
+<p>单个信息泄露可能影响有限，但多个弱点组合后会形成完整攻击链。</p>
+<h3 id="解题过程-11">解题过程</h3>
+<ol>
+<li>访问 <code>/robots.txt</code>，获得隐藏后台路径。</li>
+<li>访问 <code>/admin</code>。</li>
+<li>在页面公开信息中发现密码线索。</li>
+<li>使用页面末尾暴露的电话号码作为登录凭据，成功取得 Flag。</li>
+</ol>
+<h3 id="原理详解-11">原理详解</h3>
+<p>本题组合了三类问题：</p>
+<ul>
+<li><code>robots.txt</code> 暴露后台入口。</li>
+<li>页面公开敏感个人信息。</li>
+<li>后台使用可猜测、可从公开信息获得的弱密码。</li>
+</ul>
+<p>安全性取决于整条链路中最弱的一环。隐藏 URL 不是鉴权，电话号码也不是秘密。</p>
+<h3 id="风险与修复-11">风险与修复</h3>
+<ul>
+<li>后台必须使用可靠认证和服务端授权。</li>
+<li>强制高强度密码，并配合 MFA、登录限速和异常检测。</li>
+<li>页面只展示业务需要的个人信息，敏感字段进行脱敏。</li>
+<li>不要将手机号、生日、城市等公开信息直接作为默认密码。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{2f0df6f2-5b4d-41f9-9505-8a9974096d76}</code></p>
+<hr>
+<h2 id="web13技术文档与默认凭据泄露">WEB13：技术文档与默认凭据泄露</h2>
+<h3 id="考点-12">考点</h3>
+<p>部署到生产环境的开发文档、接口文档和运维手册可能包含后台地址、测试账号和默认密码。</p>
+<h3 id="解题过程-12">解题过程</h3>
+<ol>
+<li>检查页面底部链接，发现 <code>document</code>。</li>
+<li>访问技术文档。</li>
+<li>从文档中的敏感信息或默认凭据进入对应功能，取得 Flag。</li>
+</ol>
+<h3 id="原理详解-12">原理详解</h3>
+<p>技术文档本身也是攻击面。常见泄露内容包括：</p>
+<ul>
+<li>默认管理员账号和密码</li>
+<li>内部域名、IP、端口</li>
+<li>测试接口和未上线功能</li>
+<li>API 参数、鉴权方式和示例令牌</li>
+<li>数据库结构和部署路径</li>
+</ul>
+<p>Swagger/OpenAPI、GraphQL Playground、README、安装手册都应纳入信息收集范围。</p>
+<h3 id="风险与修复-12">风险与修复</h3>
+<ul>
+<li>生产文档必须经过脱敏和发布审核。</li>
+<li>内部文档应实施独立认证和最小权限访问。</li>
+<li>部署后立即修改默认凭据。</li>
+<li>示例令牌和测试账号不能复用到生产环境。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{3d6efb97-5617-44a0-a035-7546992cc0de}</code></p>
+<hr>
+<h2 id="web14在线编辑器附件路径与物理路径泄露">WEB14：在线编辑器、附件路径与物理路径泄露</h2>
+<h3 id="考点-13">考点</h3>
+<p>在线编辑器和文件管理组件通常带有上传、附件浏览、路径回显等功能，配置不当时会暴露文件列表或服务器物理路径。</p>
+<h3 id="解题过程-13">解题过程</h3>
+<ol>
+<li>访问 <code>/editor</code>，进入编辑器页面。</li>
+<li>在附件列表或相关路径中发现：</li>
+</ol>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/editor/attached/file/var/www/html/nothinghere/fl000g.txt</span></span></code></pre>
+<ol start="3">
+<li><code>/var/www/html</code> 是常见 Linux Web 根目录。</li>
+<li>将物理路径相对于 Web 根目录的部分映射为 URL：</li>
+</ol>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/nothinghere/fl000g.txt</span></span></code></pre>
+<ol start="5">
+<li>访问该路径取得 Flag。</li>
+</ol>
+<h3 id="原理详解-13">原理详解</h3>
+<p>文件系统路径与 URL 路径不是同一个概念：</p>
+<ul>
+<li>物理路径：服务器磁盘上的 <code>/var/www/html/nothinghere/fl000g.txt</code></li>
+<li>URL 路径：客户端访问的 <code>/nothinghere/fl000g.txt</code></li>
+</ul>
+<p>若 Web 根目录正好映射到 <code>/var/www/html</code>，去掉物理路径前缀后就能推导出公开 URL。本题主要体现编辑器组件的信息泄露和路径映射，不必在没有证据时直接判定为任意文件读取。</p>
+<h3 id="风险与修复-13">风险与修复</h3>
+<ul>
+<li>删除生产环境不需要的在线编辑器和示例页面。</li>
+<li>禁止附件目录列表，避免响应中回显绝对物理路径。</li>
+<li>上传文件存放在 Web 根目录之外，并通过受控下载接口访问。</li>
+<li>对文件路径进行规范化和权限校验，防止目录穿越。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{adff5363-4fa1-4eec-b199-e24a1b98557b}</code></p>
+<hr>
+<h2 id="web15密码重置与公开信息推断">WEB15：密码重置与公开信息推断</h2>
+<h3 id="考点-14">考点</h3>
+<p>使用城市、生日、手机号等“安全问题”验证身份非常脆弱，因为答案常能通过页面、社交资料或其他公开信息推断。</p>
+<h3 id="解题过程-14">解题过程</h3>
+<ol>
+<li>根据提示访问 <code>/admin</code>。</li>
+<li>进入密码重置流程。</li>
+<li>观察页面末尾公开的邮箱等身份线索。</li>
+<li>根据线索得到重置问题要求的城市，完成验证并取得 Flag。</li>
+</ol>
+<h3 id="原理详解-14">原理详解</h3>
+<p>这类方式称为知识型认证或 KBA（Knowledge-Based Authentication）。它的问题在于：</p>
+<ul>
+<li>答案熵很低，可选范围有限。</li>
+<li>很多答案并不私密。</li>
+<li>同一个答案可能长期不变。</li>
+<li>攻击者可结合邮箱、昵称、公司和社交资料进行 OSINT。</li>
+</ul>
+<p>安全问题不能提供与随机重置令牌相同的安全性。</p>
+<h3 id="风险与修复-14">风险与修复</h3>
+<ul>
+<li>使用高熵、短时有效、一次性的密码重置令牌。</li>
+<li>重置链接发送到已验证的邮箱或可信设备。</li>
+<li>重置成功后使旧会话失效，并通知账号所有者。</li>
+<li>对重置尝试限速，不把“城市”等公开信息作为唯一身份凭据。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{52317156-5a06-4863-8570-deeaaf634c0b}</code></p>
+<hr>
+<h2 id="web16php-探针与-phpinfo-泄露">WEB16：PHP 探针与 phpinfo 泄露</h2>
+<h3 id="考点-15">考点</h3>
+<p>测试探针用于快速查看服务器环境，若部署后未删除，会向任何访问者公开大量运行信息。</p>
+<h3 id="解题过程-15">解题过程</h3>
+<p>访问常见探针路径：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/tz.php</span></span></code></pre>
+<p>页面中可看到类似 phpinfo 的环境信息，包括：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>PWD          /var/www/html</span></span>
+<span class="line"><span>PHP_SHA256   657cf6464bac28e9490c59c07a2cf7bb76c200f09cfadf6e44ea64e95fa01021</span></span>
+<span class="line"><span>FLAG         ctfshow{808169b7-debb-463b-8614-378241921cc4}</span></span>
+<span class="line"><span>USER         www-data</span></span></code></pre>
+<h3 id="原理详解-15">原理详解</h3>
+<p><code>phpinfo()</code> 或第三方 PHP 探针通常会展示：</p>
+<ul>
+<li>PHP 与 Web 服务器版本</li>
+<li>已加载扩展</li>
+<li><code>php.ini</code> 路径和关键配置</li>
+<li>文档根目录、脚本路径和系统用户</li>
+<li>环境变量、请求头和服务器变量</li>
+<li>数据库、缓存、上传等组件信息</li>
+</ul>
+<p>这些信息可用于精准选择后续测试方向。若环境变量中保存密钥，phpinfo 还可能直接造成凭据泄露。</p>
+<h3 id="风险与修复-15">风险与修复</h3>
+<ul>
+<li>测试完成后删除探针、<code>phpinfo.php</code> 和调试页面。</li>
+<li>必须保留时，应限制到内网并实施强认证。</li>
+<li>不要在公开错误页或调试页输出环境变量和配置文件内容。</li>
+<li>对已泄露的密钥执行轮换。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{808169b7-debb-463b-8614-378241921cc4}</code></p>
+<hr>
+<h2 id="web17sql-备份文件泄露">WEB17：SQL 备份文件泄露</h2>
+<h3 id="考点-16">考点</h3>
+<p>数据库导出文件通常是明文 SQL，既包含表结构，也可能包含完整业务数据、账号哈希和秘密。</p>
+<h3 id="解题过程-16">解题过程</h3>
+<p>访问：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/backup.sql</span></span></code></pre>
+<p>在 SQL 中搜索 <code>flag</code>、<code>secret</code> 等关键词：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="sql"><code><span class="line"><span style="color:#F97583">CREATE</span><span style="color:#F97583"> TABLE</span><span style="color:#E1E4E8"> `</span><span style="color:#B392F0">ctfshow_secret</span><span style="color:#E1E4E8">` (</span></span>
+<span class="line"><span style="color:#9ECBFF">  `secret`</span><span style="color:#F97583"> varchar</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">255</span><span style="color:#E1E4E8">) </span><span style="color:#F97583">DEFAULT</span><span style="color:#F97583"> NULL</span></span>
+<span class="line"><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">INSERT INTO</span><span style="color:#9ECBFF"> `ctfshow_secret`</span></span>
+<span class="line"><span style="color:#F97583">VALUES</span><span style="color:#E1E4E8"> (</span><span style="color:#9ECBFF">'ctfshow{b9aca1a9-b7d4-4bad-9158-afa537643245}'</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<p>本地可使用：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">rg</span><span style="color:#79B8FF"> -n</span><span style="color:#79B8FF"> -i</span><span style="color:#9ECBFF"> "flag|secret|password|token|key"</span><span style="color:#9ECBFF"> backup.sql</span></span></code></pre>
+<p>PowerShell：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="powershell"><code><span class="line"><span style="color:#79B8FF">Select-String</span><span style="color:#F97583"> -</span><span style="color:#E1E4E8">Path .\backup.sql </span><span style="color:#F97583">-</span><span style="color:#E1E4E8">Pattern </span><span style="color:#9ECBFF">'flag|secret|password|token|key'</span></span></code></pre>
+<h3 id="原理详解-16">原理详解</h3>
+<p>SQL Dump 可能泄露：</p>
+<ul>
+<li>表名、字段名和数据关系</li>
+<li>管理员账号、密码哈希和个人信息</li>
+<li>API Key、Token、重置码</li>
+<li>未上线功能和隐藏业务表</li>
+<li>可供 SQL 注入后续利用的精确数据库结构</li>
+</ul>
+<p>即使文件中没有明文密码，表结构本身也具有较高情报价值。</p>
+<h3 id="风险与修复-16">风险与修复</h3>
+<ul>
+<li>备份文件放在 Web 根目录之外，并使用严格文件权限。</li>
+<li>备份传输和存储均应加密。</li>
+<li>设置备份保留周期，及时删除临时导出文件。</li>
+<li>Web 服务器拒绝访问 <code>.sql</code> 只能作为补充，不能替代正确存储。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{b9aca1a9-b7d4-4bad-9158-afa537643245}</code></p>
+<hr>
+<h2 id="web18javascript-源码unicode-转义与路径线索">WEB18：JavaScript 源码、Unicode 转义与路径线索</h2>
+<h3 id="考点-17">考点</h3>
+<p>JavaScript 文件会完整下载到浏览器。Unicode 转义、压缩和混淆只能增加阅读成本，不能保护其中的秘密。</p>
+<h3 id="解题过程-17">解题过程</h3>
+<ol>
+<li>在 Network 或 Sources 面板查看页面加载的 JavaScript。</li>
+<li>在“小鸟飞停”相关脚本中发现：</li>
+</ol>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>\u4f60\u8d62\u4e86\uff0c\u53bb\u5e7a\u5e7a\u96f6\u70b9\u76ae\u7231\u5403\u76ae\u770b\u770b</span></span></code></pre>
+<ol start="3">
+<li>Unicode 解码得到：</li>
+</ol>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>你赢了，去幺幺零点皮爱吃皮看看</span></span></code></pre>
+<ol start="4">
+<li>“幺幺零”对应 <code>110</code>，“点皮爱吃皮”谐音提示 <code>.php</code>，因此访问：</li>
+</ol>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/110.php</span></span></code></pre>
+<ol start="5">
+<li>取得 Flag。</li>
+</ol>
+<p>浏览器控制台可用 JSON 解析 Unicode 转义：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="javascript"><code><span class="line"><span style="color:#79B8FF">JSON</span><span style="color:#E1E4E8">.</span><span style="color:#B392F0">parse</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">'"</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">u4f60</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">u8d62</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">u4e86</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">uff0c</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">u53bb</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">u5e7a</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">u5e7a</span><span style="color:#79B8FF">\\</span><span style="color:#9ECBFF">u96f6..."'</span><span style="color:#E1E4E8">)</span></span></code></pre>
+<h3 id="原理详解-17">原理详解</h3>
+<p><code>\uXXXX</code> 是 JavaScript/JSON 常见的 Unicode 转义形式，<code>XXXX</code> 是字符的十六进制码点。它属于编码表示，不是加密。</p>
+<p>检查 JavaScript 时应重点搜索：</p>
+<ul>
+<li>API 路径和隐藏页面</li>
+<li>参数名、角色名和错误信息</li>
+<li>固定 Token、Key、IV</li>
+<li>注释、调试函数和测试账号</li>
+<li><code>sourceMappingURL</code> 指向的 <code>.map</code> 文件</li>
+</ul>
+<h3 id="风险与修复-17">风险与修复</h3>
+<ul>
+<li>前端只保存公开信息和运行所需的非秘密配置。</li>
+<li>API 密钥和高权限令牌必须保存在服务端。</li>
+<li>不要把压缩、Base64、Unicode 或混淆当作安全措施。</li>
+<li>生产环境谨慎发布 Source Map，尤其是其中包含完整源码时。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{22fee896-98c0-4104-8ef4-07561dcad4f9}</code></p>
+<hr>
+<h2 id="web19客户端-aes-加密与请求参数重放">WEB19：客户端 AES 加密与请求参数重放</h2>
+<h3 id="考点-18">考点</h3>
+<p>客户端 JavaScript 中的加密密钥、IV 和算法对用户完全可见。服务端若只比较客户端提交的固定密文，攻击者可以跳过页面逻辑，直接构造请求。</p>
+<h3 id="已知服务端判断">已知服务端判断</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="php"><code><span class="line"><span style="color:#E1E4E8">$u </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> $_POST[</span><span style="color:#9ECBFF">'username'</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#E1E4E8">$p </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> $_POST[</span><span style="color:#9ECBFF">'pazzword'</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> ($u </span><span style="color:#F97583">===</span><span style="color:#9ECBFF"> 'admin'</span><span style="color:#F97583"> &#x26;&#x26;</span></span>
+<span class="line"><span style="color:#E1E4E8">    $p </span><span style="color:#F97583">===</span><span style="color:#9ECBFF"> 'a599ac85a73384ee3219fa684296eaa62667238d608efa81837030bd1ce1bf04'</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#79B8FF">    echo</span><span style="color:#E1E4E8"> $flag;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>注意参数名是题目中的 <code>pazzword</code>，不是常见的 <code>password</code>。参数名拼写必须与服务端一致。</p>
+<h3 id="解题过程-18">解题过程</h3>
+<p>直接向服务端提交其期望的值：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">curl.exe</span><span style="color:#79B8FF"> -sS</span><span style="color:#79B8FF"> -X</span><span style="color:#9ECBFF"> POST</span><span style="color:#9ECBFF"> "https://题目地址/"</span><span style="color:#79B8FF"> -H</span><span style="color:#9ECBFF"> "Content-Type: application/x-www-form-urlencoded"</span><span style="color:#79B8FF"> --data</span><span style="color:#9ECBFF"> "username=admin&#x26;pazzword=a599ac85a73384ee3219fa684296eaa62667238d608efa81837030bd1ce1bf04"</span></span></code></pre>
+<p>页面 JavaScript 中还可以看到：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>算法</td>
+<td>AES-128</td>
+</tr>
+<tr>
+<td>模式</td>
+<td>CBC</td>
+</tr>
+<tr>
+<td>填充</td>
+<td>ZeroPadding</td>
+</tr>
+<tr>
+<td>Key</td>
+<td><code>0000000372619038</code>，16 字节</td>
+</tr>
+<tr>
+<td>IV</td>
+<td><code>ilove36dverymuch</code>，16 字节</td>
+</tr>
+<tr>
+<td>输出</td>
+<td>Hex</td>
+</tr>
+</tbody>
+</table>
+<h3 id="原理详解-18">原理详解</h3>
+<ul>
+<li>AES 是分组密码，AES-128 使用 16 字节密钥。</li>
+<li>AES 的分组大小固定为 16 字节，与密钥长度概念不同。</li>
+<li>CBC 模式会把前一密文分组参与下一分组计算，并需要 16 字节 IV。</li>
+<li>ZeroPadding 用 <code>0x00</code> 补齐分组，对某些数据存在去填充歧义。</li>
+<li>Hex 只是把二进制密文表示为十六进制字符串。</li>
+</ul>
+<p>关键问题不在 AES 是否安全，而在信任边界错误：密钥、IV、算法和待提交值都位于攻击者控制的客户端。HTTPS 已负责传输加密，额外的固定客户端加密不能替代服务端认证。</p>
+<h3 id="风险与修复-18">风险与修复</h3>
+<ul>
+<li>密码验证必须在服务端完成。</li>
+<li>服务端使用 Argon2id、bcrypt 等密码哈希方案，不应保存或比较固定可重放密文。</li>
+<li>不在 JavaScript 中硬编码真正需要保密的密钥。</li>
+<li>服务端不能假设请求一定经过官方页面或官方 JavaScript。</li>
+</ul>
+<p><strong>Flag：</strong> <code>ctfshow{fffaff95-4b87-494c-bd25-4e3104fb11fc}</code></p>
+<hr>
+<h2 id="web20accessmdb-数据库文件泄露">WEB20：Access/MDB 数据库文件泄露</h2>
+<h3 id="考点-19">考点</h3>
+<p>把数据库文件直接放在 Web 目录中，会导致任何人下载完整数据库。</p>
+<h3 id="解题过程-19">解题过程</h3>
+<p>访问：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>/db/db.mdb</span></span></code></pre>
+<p>下载后可使用以下方式检查：</p>
+<ul>
+<li>Microsoft Access</li>
+<li>LibreOffice Base</li>
+<li>Linux 的 <code>mdbtools</code></li>
+<li><code>strings</code> 配合关键词搜索</li>
+</ul>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">strings</span><span style="color:#9ECBFF"> db.mdb</span><span style="color:#F97583"> |</span><span style="color:#B392F0"> rg</span><span style="color:#79B8FF"> -i</span><span style="color:#9ECBFF"> "ctfshow|flag|secret|password"</span></span></code></pre>
+<p>最终得到：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>flag{ctfshow_old_database}</span></span></code></pre>
+<h3 id="原理详解-19">原理详解</h3>
+<p><code>.mdb</code> 是 Microsoft Access/Jet 数据库格式。它是二进制文件，但其中仍可能包含可直接提取的表名、字段名和字符串数据。Web 服务器通常不会理解其业务含义，只会把它作为静态文件下载。</p>
+<p>这类问题与 SQLite 的 <code>.db</code>、<code>.sqlite</code> 文件泄露本质相同：数据库文件一旦可下载，应用层登录和权限控制就被绕过。</p>
+<h3 id="风险与修复-19">风险与修复</h3>
+<ul>
+<li>数据库文件必须位于 Web 根目录之外。</li>
+<li>使用专门数据库服务或受控的数据访问层。</li>
+<li>对下载目录配置扩展名白名单，而不是只拦截少数危险后缀。</li>
+<li>若数据库已泄露，应评估全部数据并轮换其中的密码和密钥。</li>
+</ul>
+<p><strong>Flag：</strong> <code>flag{ctfshow_old_database}</code></p>
+<hr>
+<h2 id="3-高频误区">3. 高频误区</h2>
+<ol>
+<li>
+<p><strong>页面看不到就是不存在。</strong><br>
+错。内容可能在源码注释、隐藏元素、响应头、Cookie、JavaScript 或其他请求中。</p>
+</li>
+<li>
+<p><strong>禁用 F12、右键和复制就能保护源码。</strong><br>
+错。客户端限制不构成安全边界。</p>
+</li>
+<li>
+<p><strong>robots.txt 中禁止抓取的路径就是受保护路径。</strong><br>
+错。它只是一份公开的爬虫建议。</p>
+</li>
+<li>
+<p><strong>Base64、URL 编码、Unicode 和十六进制是加密。</strong><br>
+错。它们都是可逆编码或表示方法。</p>
+</li>
+<li>
+<p><strong>前端使用 AES 就能隐藏密码或密钥。</strong><br>
+错。浏览器必须获得算法和密钥才能运行，用户也就能获得它们。</p>
+</li>
+<li>
+<p><strong>删除当前源码中的密码就解决了泄露。</strong><br>
+错。Git/SVN 历史、备份包、交换文件和数据库导出中仍可能保留旧值。</p>
+</li>
+<li>
+<p><strong>目录爆破只看 HTTP 200。</strong><br>
+错。要同时比较状态码、长度、内容类型、标题和响应正文，识别自定义 404。</p>
+</li>
+</ol>
+<h2 id="4-信息收集检查清单">4. 信息收集检查清单</h2>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" disabled> 查看原始 HTML 源码和 HTML 注释</li>
+<li class="task-list-item"><input type="checkbox" disabled> 查看 Elements 与原始源码的差异</li>
+<li class="task-list-item"><input type="checkbox" disabled> 检查 Network 中的所有请求</li>
+<li class="task-list-item"><input type="checkbox" disabled> 检查响应头、自定义 Header、Cookie 和重定向</li>
+<li class="task-list-item"><input type="checkbox" disabled> 检查 <code>robots.txt</code>、<code>sitemap.xml</code> 和 <code>.well-known/</code></li>
+<li class="task-list-item"><input type="checkbox" disabled> 检查 JavaScript、注释、接口路径和 Source Map</li>
+<li class="task-list-item"><input type="checkbox" disabled> 检查 <code>.phps</code>、备份包和临时文件</li>
+<li class="task-list-item"><input type="checkbox" disabled> 检查 <code>.git</code>、<code>.svn</code> 等版本控制元数据</li>
+<li class="task-list-item"><input type="checkbox" disabled> 检查 PHP 探针、调试页面和技术文档</li>
+<li class="task-list-item"><input type="checkbox" disabled> 检查 SQL、MDB、SQLite 等数据库备份</li>
+<li class="task-list-item"><input type="checkbox" disabled> 检查 DNS TXT 等公开记录</li>
+<li class="task-list-item"><input type="checkbox" disabled> 检查密码重置流程是否依赖可公开推断的信息</li>
+<li class="task-list-item"><input type="checkbox" disabled> 下载的文件进行解压、全文搜索和历史检查</li>
+<li class="task-list-item"><input type="checkbox" disabled> 记录每条线索的来源、请求路径、响应证据和复现步骤</li>
+</ul>
+</div></div></div><footer class="article-end shell"><div><span>写于 2026/10/11</span><p>感谢你把时间留在这里。</p></div><a href="/fuguang-notes/category/tech/">继续浏览「技术」<span aria-hidden="true">↗</span></a></footer></article><section class="related-posts shell section-space"><header class="simple-heading"><span>NEXT READING</span><h2>同一条线上的记录</h2></header><div><a class="post-row" href="/fuguang-notes/posts/vulnhub-ionic-defibrillator/" style="--row-accent:#3ecf8e"><span class="post-index">01</span><div class="post-row-main"><div class="post-row-meta"><span>技术</span><time datetime="2026-10-09T00:00:00.000Z">2026/10/09</time></div><h3>VulnHub Ionic Defibrillator 渗透记录：从 FTP 匿名到 sudo 提权</h3><p>一台 Rick and Morty 主题的中级靶机：FTP 匿名、robots.txt 与 cgi-bin、Cockpit、两个后门端口、SSH 爆破，再靠一个 safe 二进制和自制字典拿满九个 Flag。</p></div><span class="post-row-time">6 min</span><span class="post-row-arrow" aria-hidden="true">↗</span></a><a class="post-row" href="/fuguang-notes/posts/vulnhub-dc9/" style="--row-accent:#3ecf8e"><span class="post-index">02</span><div class="post-row-main"><div class="post-row-meta"><span>技术</span><time datetime="2026-10-08T00:00:00.000Z">2026/10/08</time></div><h3>VulnHub DC-9 渗透实录：从 SQL 注入到端口敲门提权</h3><p>DC 系列第九台靶机：POST 型 SQL 注入拿到后台凭据，文件包含读出 knockd 配置，端口敲门放行 SSH，再用一个文件追加脚本把 root 权限写进系统文件。</p></div><span class="post-row-time">6 min</span><span class="post-row-arrow" aria-hidden="true">↗</span></a><a class="post-row" href="/fuguang-notes/posts/litctf-widebyte-sqli/" style="--row-accent:#3ecf8e"><span class="post-index">03</span><div class="post-row-main"><div class="post-row-meta"><span>技术</span><time datetime="2026-07-28T00:00:00.000Z">2026/07/28</time></div><h3>一次宽字节注入的完整复盘：从字符串型判断到 UNION 绕过</h3><p>LitCTF 的一道 EasySql，把判断注入类型、识别转义防御、宽字节绕过和 UNION 取数四个环节完整走了一遍。</p></div><span class="post-row-time">3 min</span><span class="post-row-arrow" aria-hidden="true">↗</span></a></div></section></main><footer class="site-footer"><div class="shell footer-grid"><div class="footer-intro"><span class="brand-mark" aria-hidden="true">浮</span><div><strong>浮光note</strong><p>安全技术、CTF 复盘与读书笔记，记录那些值得再想一遍的问题。</p></div></div><div class="footer-links"><div><strong>浏览</strong><a href="/fuguang-notes/category/tech/">技术</a><a href="/fuguang-notes/category/life/">生活</a><a href="/fuguang-notes/category/reading/">读书</a><a href="/fuguang-notes/category/gaming/">游戏</a></div><div><strong>更多</strong><a href="/fuguang-notes/archive/">文章归档</a><a href="/fuguang-notes/about/">关于作者</a><a href="/fuguang-notes/rss.xml">RSS 订阅</a><a href="mailto:theologian25@qq.com">邮件联系</a></div></div></div><div class="shell footer-bottom"><span>© 2026 Theologian25 · 愚者</span><span>认真写作，缓慢更新。</span></div></footer></body></html>
